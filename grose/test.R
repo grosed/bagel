@@ -51,9 +51,22 @@ n <- 500
 
 x <- rnorm(n,0,sd=sqrt(sigma2))
 
+prob_change <- prob_value
 
 #result <- OBCD_online_mean_varknown(x, decay=pram$decay,prob_change=prob_value, mu0=c(0,0),tau0=pram$tau0,delta0=0,sigma2,thresh=Inf,error=pram$error,K=pram$K)
 
+
+inputs <- list("basic_test"=list("x"=x,
+               "decay"=pram$decay,
+               "prob_change"=prob_value,
+               "mu0"=c(0,0),
+               "tau0"=pram$tau0,
+               "delta0"=0,
+               "sigma2"=sigma2,
+               "thresh"=Inf,
+               "error"=pram$error,
+               "K"=501))
+save(file="inputs",list=c("inputs")) 
 
 
 result <- OBCD_online_mean_varknown(x, decay=pram$decay,prob_change=prob_value, mu0=c(0,0),tau0=pram$tau0,delta0=0,sigma2,thresh=Inf,error=pram$error,K=501)
