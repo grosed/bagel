@@ -1,2 +1,0 @@
-export("bagel_mean", "bagel_mean_original", "update_post_parameter",
-       "update_prior")
