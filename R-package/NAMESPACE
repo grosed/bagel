@@ -1,3 +1,4 @@
 export("bagel_mean")
-export("update_post_parameter")
-export("update_prior")
+export("bagel_slope")
+export("generate_piecewise_linear_data")
+

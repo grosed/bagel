@@ -1,5 +1,6 @@
 
-
+bagel_slope <- function(x, p_dis,p_conti,decay,mu0,delta_1,delta_2,delta_3,delta_4,sigma2,thresh,error,K,prior)
+{
 
 bagel_slope_call <- function(x, p_dis=0.001,p_conti=0.001,decay,mu0,delta_1,delta_2,delta_3,delta_4,sigma2,thresh,error='error1',K=100,prior='prior1')
 {
@@ -226,4 +227,8 @@ bagel_slope_call <- function(x, p_dis=0.001,p_conti=0.001,decay,mu0,delta_1,delt
               prune_dis=prune_dis, candidate_dis = candidate_dis,error_ratio_dis=error_ratio_dis,
               prune_conti=prune_conti, candidate_conti = candidate_conti,error_ratio_conti=error_ratio_conti,
               mu_dis = mu_dis,Sigma_dis=Sigma_dis,mu_conti=mu_conti,Sigma_conti=Sigma_conti))
+}
+
+return(bagel_slope_call(x, p_dis,p_conti,decay,mu0,delta_1,delta_2,delta_3,delta_4,sigma2,thresh,error,K,prior))
+
 }

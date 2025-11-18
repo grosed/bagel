@@ -7,6 +7,54 @@ bagel_mean <- function(x,decay,probability,mu,tau,delta,sigma,threshold,error,K)
 
 bagel_mean_original <- function(x, decay,prob_change, mu0,tau0,delta0,sigma2,thresh,error='error1',K=100)
 {
+
+
+	update_post_parameter <- function(mu_prior,Sigma_prior,sigma2,obs,w_prev)
+	{
+		if(length(mu_prior)==1)
+		{
+			h=matrix(c(1), ncol = 1)
+    		}
+		else
+		{
+			h=matrix(c(1, 1), ncol = 1)
+    		}
+  		Q = as.numeric(sigma2+t(h)%*%Sigma_prior%*%h)
+  		e = as.numeric(obs - t(h) %*% mu_prior)
+  		A = (Sigma_prior %*% h)* 1/Q
+  		Sigma = Sigma_prior - A%*%t(A)*Q #THE INVERSE OF THE LAMBDA
+  		mu = mu_prior + A*e
+  		w = w_prev * dnorm(obs, t(h)%*%mu_prior, sqrt(t(h)%*%Sigma_prior%*%h+sigma2)) #marginal likelihood
+  		return(list(mu_post=mu, Sigma_post=Sigma, w=w))
+	}
+
+
+
+	update_prior <- function(Sig0,mu0,mu_post,Sigma_post)
+	{
+		Sig_beta_beta <- Sig0[1:1, 1:1]
+  		Sig_beta_gamma <- Sig0[1:1, 2:2]
+  		Sig_gamma_beta <- Sig0[2:2, 1:1]
+  		Sig_gamma_gamma <- Sig0[2:2, 2:2]
+  
+		mu_beta <- mu0[1:1]
+  		mu_gamma <- mu0[2:2]
+  
+		# Update mean
+  		Sig_beta_beta_inv <- solve(Sig_beta_beta)
+  		mu_gamma_updated <- mu_gamma + Sig_gamma_beta %*% Sig_beta_beta_inv %*% (mu_post - mu_beta)  # (mu_beta - mu_beta) = 0
+  		mu_updated <- c(mu_post, mu_gamma_updated)  # so mu_updated = mu0_dis
+  
+		# Update covariance
+  		Sig_gamma_gamma_updated <- Sig_gamma_gamma + Sig_gamma_beta %*% Sig_beta_beta_inv %*% 
+    					(Sigma_post - Sig_beta_beta) %*% Sig_beta_beta_inv %*% Sig_beta_gamma
+  		Sig_beta_gamma_updated <- Sig_gamma_beta%*%Sig_beta_beta_inv %*%Sigma_post
+  		Sig_gamma_beta_updated <- Sigma_post %*% Sig_beta_beta_inv %*% Sig_beta_gamma
+  		Sig_updated <- rbind(cbind(Sigma_post, Sig_beta_gamma_updated),cbind(Sig_gamma_beta_updated, Sig_gamma_gamma_updated))
+  		return(list(mu=mu_updated,Sig=Sig_updated))
+		}
+
+
   TT=length(x)
   be_change=NA
   prune =error_ratio= NA
