@@ -109,7 +109,6 @@ bagel_mean_original <- function(x, decay,prob_change, mu0,tau0,delta0,sigma2,thr
         ind =find_min_err_index(w[2:(length(candidate))], mu[2:(length(candidate))], Sigma[2:(length(candidate))])
         error_ratio = c(error_ratio,ind$ratio)
         ind = ind$index
-        print(ind)
       }else if(error =='error3'){
         ind = which.min(w[2:(length(candidate))])
         error_ratio = c(error_ratio,NA)}
