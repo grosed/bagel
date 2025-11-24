@@ -41,5 +41,12 @@ library(bagel)
 
 
 ```R
-
+x <- c(1,2,3,4,5,6,7)
+plot(x)
 ```
+
+
+    
+![png](output_5_0.png)
+    
+
