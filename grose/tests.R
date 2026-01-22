@@ -80,7 +80,9 @@ prior <- function(t)
 }
 
 
-
+##data
+set.seed(0)
+y<-rnorm(100)
 
 
 

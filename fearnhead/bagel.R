@@ -38,12 +38,14 @@ sigma<-1 ## sd of noise
 p<-1 ##parameter for prior on change location. p=1 gives uniform prior
 p0 <-0.9 ##prob of  no change at any time 
 ##data
+set.seed(0)
 y<-rnorm(100)
 
 ##initialise
 d1<-length(mu.beta)
 d2<-length(mu.gamma(1))
 n<-length(y)
+
 
 ###at time t we have t particles, to simplify storage we will set up an array for the parameters
 ##not the best approach for large n or when we have pruning
@@ -62,6 +64,9 @@ w <- dnorm(y[1],t(a(t))%*%mu.beta,sqrt(var.pred))
 logw<-logw+log(sum(w))
 w<-w/sum(w)
 
+## DJG - i is not defined - think it needs to be 1 for this to work
+i <- 1
+
 ##THM 3 but with t in place of t-1, some issue with THM 3 with transpose
 h.i <- a(t)
 e.i <- as.numeric(y[t] - t(h.i) %*% mu.post[1:d1,i])  ##I think e_i is this
@@ -70,6 +75,8 @@ A <- (1/Q)* (Sigma.post[1:d1,1:d1,i] %*% h.i)
 ##for no-change model only update the beta components
 Sigma.post[1:d1,1:d1,i] <- Sigma.post[1:d1,1:d1,i] - Q*((A)%*%t(A)) ##I think the update for Sigma is this
 mu.post[1:d1,i] <- mu.post[1:d1,i]+A*e.i
+
+
 
 ##update t
 t<-t+1
@@ -81,7 +88,10 @@ while(t<=n){
   Sigma.post[1:d1,d1+1:d2,t] <- B %*% Sigma.post[1:d1,1:d1,1]
   Sigma.post[d1+1:d2,1:d1,t] <- t(Sigma.post[1:d1,d1+1:d2,t])
   Sigma.post[d1+1:d2,d1+1:d2,t] <- Sigma.gamma(t) + B%*%(Sigma.post[1:d1,1:d1,1]-Sigma.beta)%*%t(B)
+
+
   
+
   ###UPDATE weights based on prior from THM1 without likelihood
   if(t==2){##at any time we have prob p0 of no change
     w<-c(p0,1-p0)

@@ -24,9 +24,9 @@ bagel_kv <- function(ptype,prior,H,sigma,y)
 
 
   t <- t + 1
-  particles$set(t,predict(population$get(1),prior(t),H(t,t)))
+  population$set(t,predict(population$get(1),prior(t),H(t,t)))
 
-  return(particles)
+  return(population)
 
 
 
