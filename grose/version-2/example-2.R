@@ -1,12 +1,5 @@
 
-source("particle.R")
-source("predict.R")
-source("update.R")
-source("bagel-dan.R")
-source("bagel.R")
-
 ## SET-UP FOR EXAMPLE 2
-
 
 H <- function(t,tau)
 {
@@ -75,35 +68,3 @@ prior <- function(t)
          )
    }
 }
-
-
-##data
-set.seed(0)
-y <- rnorm(100)
-
-
-# initialise bagel
-sigma = NULL
-# res <- bagel_kv(particle,prior,H,sigma,y[1])
-
-res <- bagel(particle,prior,H)
-
-res <- update(res,y[1])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

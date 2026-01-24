@@ -1,8 +1,5 @@
 
 source("particle.R")
-source("predict.R")
-source("update.R")
-source("bagel-dan.R")
 source("bagel.R")
 
 ## SET-UP FOR EXAMPLE 2
@@ -89,21 +86,3 @@ sigma = NULL
 res <- bagel(particle,prior,H)
 
 res <- update(res,y[1])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -29,6 +29,4 @@ bagel_kv <- function(ptype,prior,H,sigma,y)
   return(population)
 
 
-
-
 }

@@ -8,7 +8,6 @@ setMethod("update","particle_type",
 	    H <- object@H
 	    I <- diag(1)
 	    e <- y - t(H) %*% mu
-	    browser()
 	    Q <- (t(H) %*% sigma %*% H) + I
 	    Q <- Q[1,1] # treat Q as a scalar
 	    A <- sigma %*% H%*% solve(Q)
