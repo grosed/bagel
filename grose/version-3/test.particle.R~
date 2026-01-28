@@ -1,0 +1,10 @@
+source("particle.R")
+source("example-2.R")
+
+
+
+tau <- 1
+
+p <- particle_type(prior,H,tau)
+
+

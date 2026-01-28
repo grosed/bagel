@@ -151,6 +151,6 @@ while(t<=n){
   ##increment t
   t<-t+1
 }
-
+browser()
 
 }
