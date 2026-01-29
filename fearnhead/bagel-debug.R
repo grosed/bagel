@@ -147,10 +147,16 @@ while(t<=n){
   }
   ##THIS IS WHERE YOU WOULD PRUNE 
   ##THE ABOVE WOULD BE MAINLY UNCHANGED EXCEPT WE HAVE USED THAT tau associate with entry i is tau=i-1 in definition of h.i
-  
+
+
+if(t == n)
+{
+  browser()
+}
+
   ##increment t
   t<-t+1
+  
 }
-browser()
 
 }

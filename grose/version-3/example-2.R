@@ -21,7 +21,7 @@ H <- function(t,tau)
       return(matrix(c(1,t),nc = 1))
     }
   }
-  if(tau == 1)
+  if(tau == 0)
   {
      return(a(t))
   }

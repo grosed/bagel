@@ -1,6 +1,7 @@
 
 # type
 setClass("particle_type", slots=list(prior = "function", H = "function", tau = "integer", post.mu = "matrix", post.sigma = "matrix"))
+# constructor
 particle <- function(prior,H,tau)
 {
    return(new("particle_type", prior = prior, H = H, tau = tau, post.mu = matrix(), post.sigma = matrix()))
@@ -8,6 +9,7 @@ particle <- function(prior,H,tau)
 
 # type
 setClass("particle_kv_type", slots=list(s = "numeric"),contains="particle_type")
+# constructor
 particle_kv <- function(prior,H,tau,s)
 {
    return(new("particle_type", prior = prior, H = H, tua = tau, post.mu = matrix(), post.sigma = matrix(), s = s))
@@ -19,7 +21,7 @@ setGeneric("theorem_2",function(object,...) object)
 setMethod("theorem_2","particle_type",
           function(object,t)
 	  {
-	     if(object@tau != 1)
+	     if(object@tau != 0)
 	     {
 	       # throw an error !!
 	     }
@@ -65,13 +67,11 @@ setMethod("theorem_2","particle_type",
 
    		top <- as.matrix(object@post.mu[1:d1,1])
    		bottom <- mu.gamma.t + B %*% (as.matrix(object@post.mu[1:d1,1]) - mu.beta.t)
-                print(top)
-		print(bottom)
 		post.mu.t <- rbind(top,bottom)
 	     }
 
 
-             return(new(class(object)[1], prior = object@prior, H = object@H, tau = t, post.mu = post.mu.t, post.sigma = post.sigma.t))
+             return(new(class(object)[1], prior = object@prior, H = object@H, tau = t - 1L, post.mu = post.mu.t, post.sigma = post.sigma.t))
 	  })
 
 # theorem_3
@@ -79,11 +79,10 @@ setGeneric("theorem_3",function(object,...) object)
 setMethod("theorem_3","particle_type",
           function(object,t,y)
 	  {
-	    browser()
 	    y <- matrix(c(y),1,1)
 	    prior.t <- prior(t)
-	    mu <- prior.t$mu
-	    sigma <- prior.t$sigma
+	    mu <- object@post.mu
+	    sigma <- object@post.sigma
 	    H.t <- H(t,object@tau)
 	    I <- diag(1)
 	    e <- y - t(H.t) %*% mu
