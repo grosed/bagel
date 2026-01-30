@@ -1,24 +1,68 @@
 
 # type
-setClass("particle_type", slots=list(prior = "function", H = "function", tau = "integer", post.mu = "matrix", post.sigma = "matrix"))
+setClass("particle_type", slots=list(prior = "function", H = "function", tau = "integer", post.mu = "matrix", post.sigma = "matrix", weight = "numeric", p0 = "numeric", p = "numeric"))
 # constructor
-particle <- function(prior,H,tau)
-{
-   return(new("particle_type", prior = prior, H = H, tau = tau, post.mu = matrix(), post.sigma = matrix()))
+particle <- function(prior,H,tau,p0,p)
+{   
+   return(new("particle_type", prior = prior, H = H, tau = tau, p0 = p0, p = p, post.mu = matrix(), post.sigma = matrix(), weight = 0.0))
 }
 
 # type
 setClass("particle_kv_type", slots=list(s = "numeric"),contains="particle_type")
 # constructor
-particle_kv <- function(prior,H,tau,s)
+particle_kv <- function(prior,H,tau,p,p0,s)
 {
-   return(new("particle_type", prior = prior, H = H, tua = tau, post.mu = matrix(), post.sigma = matrix(), s = s))
+   return(new("particle_type", prior = prior, H = H, tua = tau, p0 = p0, p = p, post.mu = matrix(), post.sigma = matrix(), weight = 0.0, s = s))
 }
 
 
+# theorem_1
+setGeneric("theorem_1",function(object.1,object.t,t) standardGeneric("theorem_1"))
+setMethod("theorem_1",c("particle_type","particle_type","integer"),
+          function(object.1,object.t,t)
+	  {
+	     # NOTE - IMPLEMENTED ONLY FOR UNIFORM FOR NOW
+	     if(object.1@tau != 0) # has to be intial object
+	     {
+	       # throw an error !!
+	     }
+	     if(object.t@tau == object.1@tau) # initial particle
+	     {
+	       if(t == 1L)
+	       {
+		  weight <- object.1@p0  
+	       }
+	       else
+	       {
+	          weight <- object.t@weight
+	       }
+	       return(new(class(object.t)[1], prior = object.t@prior, H = object.t@H, tau = object.t@tau,p0 = object.t@p0, p = object.t@p,
+	                                      post.mu = object.t@post.mu, post.sigma = object.t@post.sigma, weight = weight))
+             }
+	     if(object.t@tau == t - 1L) # latest particle
+	     {
+	       weight <- object.1@weight*(1.0 - object.t@p0)/(object.t@p0*(t-1L))
+	     }
+	     else 
+	     {
+	       if(t == 2)
+	       {
+	         weight <- (1.0 - object.t@p0) #
+	       }
+	       else
+	       {
+	         weight <- object.t@weight*(t-2L)/(t-1L)
+	       }
+	     }
+             return(new(class(object.t)[1], prior = object.t@prior, H = object.t@H, tau = object.t@tau,p0 = object.t@p0, p = object.t@p,
+	                                  post.mu = object.t@post.mu, post.sigma = object.t@post.sigma, weight = weight))
+	  })
+
+
+
 # theorem_2
-setGeneric("theorem_2",function(object,...) object)
-setMethod("theorem_2","particle_type",
+setGeneric("theorem_2",function(object,t) standardGeneric("theorem_2"))
+setMethod("theorem_2",c("particle_type","integer"),
           function(object,t)
 	  {
 	     if(object@tau != 0)
@@ -70,13 +114,13 @@ setMethod("theorem_2","particle_type",
 		post.mu.t <- rbind(top,bottom)
 	     }
 
-
-             return(new(class(object)[1], prior = object@prior, H = object@H, tau = t - 1L, post.mu = post.mu.t, post.sigma = post.sigma.t))
+             return(new(class(object)[1], prior = object@prior, H = object@H, tau = t - 1L,p0 = object@p0, p = object@p,
+	                                  post.mu = post.mu.t, post.sigma = post.sigma.t, weight = object@weight))
 	  })
 
 # theorem_3
-setGeneric("theorem_3",function(object,...) object)
-setMethod("theorem_3","particle_type",
+setGeneric("theorem_3",function(object,t,y) standardGeneric("theorem_3"))
+setMethod("theorem_3",c("particle_type","integer","numeric"),
           function(object,t,y)
 	  {
 	    y <- matrix(c(y),1,1)
@@ -91,5 +135,30 @@ setMethod("theorem_3","particle_type",
 	    A <- sigma %*% H.t%*% solve(Q)
 	    sigma <- sigma - A %*% t(A) * Q
 	    mu <- mu + A %*% e
-	    return(new(class(object)[1], prior = object@prior, H = object@H, tau = object@tau, post.mu = mu, post.sigma = sigma))
+	    return(new(class(object)[1], prior = object@prior, H = object@H, tau = object@tau, p0 = object@p0, p = object@p,
+	                                 post.mu = mu, post.sigma = sigma, weight = object@weight))
 	  })
+
+
+
+# theorem_4
+setGeneric("theorem_4",function(object,t,y) standardGeneric("theorem_4"))
+setMethod("theorem_4",c("particle_type","integer","numeric"),
+          function(object,t,y)
+	  {
+             #if(object@tau == 0)
+	     #{
+	     #   return(object)
+	     #}
+             sigma.post <- object@post.sigma
+	     mu.post <- object@post.mu
+	     
+	     H.t.tau <- object@H(t,object@tau)
+	     sigma <- 1.0 # just testing - this needs to be in the devided particle - need more info on this
+	     var.pred <- sigma^2 * (1.0 + t(H.t.tau) %*% sigma.post %*% H.t.tau)
+	     weight <- object@weight * dnorm(y,t(H.t.tau) %*% mu.post,sqrt(var.pred))
+	     
+             return(new(class(object)[1], prior = object@prior, H = object@H, tau = object@tau,p0 = object@p0, p = object@p,
+	                                  post.mu = object@post.mu, post.sigma = object@post.sigma, weight = weight))
+	  })
+

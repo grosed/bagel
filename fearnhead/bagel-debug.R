@@ -102,7 +102,7 @@ while(t<=n){
   }else{
     if(p<1){#geometric prior
       w<-c(w[1],w[2:(t-1)]*p*(1-p^(t-2))/(1-p^(t-1)),w[1]*(1-p0)*(1-p)/((1-p^(t-1))*p0))
-    }else{##uniform -- we could just use this
+    }else{##uniform -- wecould just use this
       w<-c(w[1],w[2:(t-1)]*(t-2)/(t-1),w[1]*(1-p0)/(p0*(t-1)))
     }
   }
@@ -119,10 +119,12 @@ while(t<=n){
       
     }
   }
-  
+
+  # TAKE THIS OUT FOR NOW
+
   ##normalise weights
-  logw<-logw+log(sum(w))
-  w<-w/sum(w)
+  #logw<-logw+log(sum(w))
+  # w<-w/sum(w)
   ###THIS IS WHERE YOU WOULD CHECK IS THERE IS EVIDENCE FOR A CHANGE/STOP THE ALGORITHM
   
   ###THM 3 to update posterior parameters
@@ -149,7 +151,7 @@ while(t<=n){
   ##THE ABOVE WOULD BE MAINLY UNCHANGED EXCEPT WE HAVE USED THAT tau associate with entry i is tau=i-1 in definition of h.i
 
 
-if(t == n)
+if(t == 2)
 {
   browser()
 }
