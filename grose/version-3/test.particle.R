@@ -9,17 +9,11 @@ y <- rnorm(100)
 tau <- 0L
 t <- 1L
 
-p.1 <- particle(prior,H,tau,p = 1.0,p0 = 0.9)
+p.1 <- particle_kv(prior,H,tau,p = 1.0,p0 = 0.9,s=1.0)
 p.1 <- theorem_2(p.1,t)
 p.1 <- theorem_1(p.1,p.1,t)
 # p.1 <- theorem_4(p.1,t,y[t])
 p.1 <- theorem_3(p.1,t,y[t])
-
-
-
-
-
-
 
 
 t <- t + 1L
@@ -34,10 +28,10 @@ p.2 <- theorem_3(p.2,t,y[t])
 
 
 sumW <- Reduce("+",Map(function(p) return(p@weight),list(p.1,p.2)),0)
-for(p in list(p.1,p.2))
+for(p in length(list(p.1,p.2)))
 {
    print("here")
-   p@weight <- p@weight / sumW
+   p[[p]]@weight <- p@weight / sumW
 } 
 
 

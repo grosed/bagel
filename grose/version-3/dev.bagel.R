@@ -13,7 +13,8 @@ particles <- list()
 tau <- 0L
 t <- 1L
 
-p <- particle(prior,H,tau,0.9,1.0)
+#p <- particle(prior,H,tau,0.9,1.0)
+p <- particle_kv(prior,H,tau,0.9,1.0,1.0)
 p <- theorem_2(p,t)
 p <- theorem_1(p,p,t)
 p <- theorem_4(p,t,Y[t])

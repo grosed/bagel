@@ -10,9 +10,9 @@ particle <- function(prior,H,tau,p0,p)
 # type
 setClass("particle_kv_type", slots=list(s = "numeric"),contains="particle_type")
 # constructor
-particle_kv <- function(prior,H,tau,p,p0,s)
+particle_kv <- function(prior,H,tau,p0,p,s)
 {
-   return(new("particle_type", prior = prior, H = H, tua = tau, p0 = p0, p = p, post.mu = matrix(), post.sigma = matrix(), weight = 0.0, s = s))
+   return(new("particle_kv_type", prior = prior, H = H, tau = tau, p0 = p0, p = p, post.mu = matrix(), post.sigma = matrix(), weight = 0.0, s = s))
 }
 
 
@@ -116,9 +116,10 @@ setMethod("theorem_2",c("particle_type","integer"),
    		bottom <- mu.gamma.t + B %*% (as.matrix(object@post.mu[1:d1,1]) - mu.beta.t)
 		post.mu.t <- rbind(top,bottom)
 	     }
-	     
-             return(new(class(object)[1], prior = object@prior, H = object@H, tau = t - 1L,p0 = object@p0, p = object@p,
-	                                  post.mu = post.mu.t, post.sigma = post.sigma.t, weight = object@weight))
+	     object@tau <- t - 1L
+	     object@post.mu <- post.mu.t
+	     object@post.sigma <- post.sigma.t
+	     return(object)
 	  })
 
 # theorem_3
@@ -148,7 +149,7 @@ setMethod("theorem_3",c("particle_type","integer","numeric"),
 
 # theorem_4
 setGeneric("theorem_4",function(object,t,y) standardGeneric("theorem_4"))
-setMethod("theorem_4",c("particle_type","integer","numeric"),
+setMethod("theorem_4",c("particle_kv_type","integer","numeric"),
           function(object,t,y)
 	  {
              if(object@tau == 0L && t == 0L)
@@ -159,7 +160,8 @@ setMethod("theorem_4",c("particle_type","integer","numeric"),
 	     mu.post <- object@post.mu
 	     
 	     H.t.tau <- object@H(t,object@tau)
-	     sigma <- 1.0 # just testing - this needs to be in the devided particle - need more info on this
+	     # sigma <- 1.0 # just testing - this needs to be in the devided particle - need more info on this
+	     sigma <- object@s 
 	     var.pred <- sigma^2 * (1.0 + t(H.t.tau) %*% sigma.post %*% H.t.tau)
 	     weight <- object@weight * dnorm(y,t(H.t.tau) %*% mu.post,sqrt(var.pred))
 	     object@weight <- weight
