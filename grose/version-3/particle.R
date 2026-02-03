@@ -36,8 +36,10 @@ setMethod("theorem_1",c("particle_type","particle_type","integer"),
 	       {
 	          weight <- object.t@weight
 	       }
-	       return(new(class(object.t)[1], prior = object.t@prior, H = object.t@H, tau = object.t@tau,p0 = object.t@p0, p = object.t@p,
-	                                      post.mu = object.t@post.mu, post.sigma = object.t@post.sigma, weight = weight))
+	       object.t@weight <- weight
+	       return(object.t)
+	       #return(new(class(object.t)[1], prior = object.t@prior, H = object.t@H, tau = object.t@tau,p0 = object.t@p0, p = object.t@p,
+	       #                               post.mu = object.t@post.mu, post.sigma = object.t@post.sigma, weight = weight))
              }
 	     if(object.t@tau == t - 1L) # latest particle
 	     {
@@ -54,8 +56,9 @@ setMethod("theorem_1",c("particle_type","particle_type","integer"),
 	         weight <- object.t@weight*(t-2L)/(t-1L)
 	       }
 	     }
-             return(new(class(object.t)[1], prior = object.t@prior, H = object.t@H, tau = object.t@tau,p0 = object.t@p0, p = object.t@p,
-	                                  post.mu = object.t@post.mu, post.sigma = object.t@post.sigma, weight = weight))
+
+	     object.t@weight <- weight
+	     return(object.t)
 	  })
 
 
@@ -113,7 +116,7 @@ setMethod("theorem_2",c("particle_type","integer"),
    		bottom <- mu.gamma.t + B %*% (as.matrix(object@post.mu[1:d1,1]) - mu.beta.t)
 		post.mu.t <- rbind(top,bottom)
 	     }
-
+	     
              return(new(class(object)[1], prior = object@prior, H = object@H, tau = t - 1L,p0 = object@p0, p = object@p,
 	                                  post.mu = post.mu.t, post.sigma = post.sigma.t, weight = object@weight))
 	  })
@@ -135,8 +138,10 @@ setMethod("theorem_3",c("particle_type","integer","numeric"),
 	    A <- sigma %*% H.t%*% solve(Q)
 	    sigma <- sigma - A %*% t(A) * Q
 	    mu <- mu + A %*% e
-	    return(new(class(object)[1], prior = object@prior, H = object@H, tau = object@tau, p0 = object@p0, p = object@p,
-	                                 post.mu = mu, post.sigma = sigma, weight = object@weight))
+
+            object@post.mu <- mu
+	    object@post.sigma <- sigma
+	    return(object)
 	  })
 
 
@@ -157,8 +162,7 @@ setMethod("theorem_4",c("particle_type","integer","numeric"),
 	     sigma <- 1.0 # just testing - this needs to be in the devided particle - need more info on this
 	     var.pred <- sigma^2 * (1.0 + t(H.t.tau) %*% sigma.post %*% H.t.tau)
 	     weight <- object@weight * dnorm(y,t(H.t.tau) %*% mu.post,sqrt(var.pred))
-	     
-             return(new(class(object)[1], prior = object@prior, H = object@H, tau = object@tau,p0 = object@p0, p = object@p,
-	                                  post.mu = object@post.mu, post.sigma = object@post.sigma, weight = weight))
+	     object@weight <- weight
+	     return(object)
 	  })
 
