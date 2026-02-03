@@ -23,11 +23,11 @@ p <- theorem_3(p,t,Y[t])
 particles <- append(particles,p)
 
 #### temp for now
-set_weight <- function(p,w)
-{
-  p@weight <- w
-  return(p)
-}
+#set_weight <- function(p,w)
+#{
+#  p@weight <- w
+#  return(p)
+#}
 
 
 for(t in 2:length(Y))

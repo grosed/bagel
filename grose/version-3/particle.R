@@ -16,6 +16,16 @@ particle_kv <- function(prior,H,tau,p0,p,s)
 }
 
 
+# set_weight
+setGeneric("set_weight",function(object,weight) standardGeneric("set_weight"))
+setMethod("set_weight",c("particle_type","numeric"),
+function(object,weight)
+{
+  object@weight <- weight
+  return(object)
+})
+
+
 # theorem_1
 setGeneric("theorem_1",function(object.1,object.t,t) standardGeneric("theorem_1"))
 setMethod("theorem_1",c("particle_type","particle_type","integer"),
