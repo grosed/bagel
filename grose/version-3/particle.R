@@ -146,10 +146,10 @@ setGeneric("theorem_4",function(object,t,y) standardGeneric("theorem_4"))
 setMethod("theorem_4",c("particle_type","integer","numeric"),
           function(object,t,y)
 	  {
-             #if(object@tau == 0)
-	     #{
-	     #   return(object)
-	     #}
+             if(object@tau == 0L && t == 0L)
+	     {
+	        return(object)
+	     }
              sigma.post <- object@post.sigma
 	     mu.post <- object@post.mu
 	     

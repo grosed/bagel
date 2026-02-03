@@ -120,11 +120,13 @@ while(t<=n){
     }
   }
 
+
+
   # TAKE THIS OUT FOR NOW
 
   ##normalise weights
-  #logw<-logw+log(sum(w))
-  # w<-w/sum(w)
+  logw<-logw+log(sum(w))
+  w<-w/sum(w)
   ###THIS IS WHERE YOU WOULD CHECK IS THERE IS EVIDENCE FOR A CHANGE/STOP THE ALGORITHM
   
   ###THM 3 to update posterior parameters
@@ -151,7 +153,7 @@ while(t<=n){
   ##THE ABOVE WOULD BE MAINLY UNCHANGED EXCEPT WE HAVE USED THAT tau associate with entry i is tau=i-1 in definition of h.i
 
 
-if(t == 2)
+if(t == n)
 {
   browser()
 }

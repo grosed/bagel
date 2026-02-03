@@ -19,12 +19,18 @@ p <- theorem_1(p,p,t)
 p <- theorem_4(p,t,Y[t])
 p <- theorem_3(p,t,Y[t])
 
-
-
 particles <- append(particles,p)
 
-# for(t in 2:length(Y))
-for(t in 2:2)
+#### temp for now
+set_weight <- function(p,w)
+{
+  p@weight <- w
+  return(p)
+}
+
+
+for(t in 2:length(Y))
+# for(t in 2:2)
 {
    t <- as.integer(t)
    particles <- append(particles,theorem_2(particles[[1]],t)) # add the new particle
@@ -42,12 +48,19 @@ for(t in 2:2)
    {
       particles[[p]] <- theorem_3(particles[[p]],t,Y[t])
    }
-print("**************")
+
+
+
+   sumW <- Reduce("+",Map(function(.) .@weight,particles),0)
+
+   particles <- Map(function(p) return(set_weight(p,p@weight/sumW)),particles) 
+
+}
+
+
+print("*****")
+
 for(p in particles)
 {
   print(p@weight)
 }
-
-}
-
-

@@ -12,8 +12,13 @@ t <- 1L
 p.1 <- particle(prior,H,tau,p = 1.0,p0 = 0.9)
 p.1 <- theorem_2(p.1,t)
 p.1 <- theorem_1(p.1,p.1,t)
-p.1 <- theorem_4(p.1,t,y[t])
+# p.1 <- theorem_4(p.1,t,y[t])
 p.1 <- theorem_3(p.1,t,y[t])
+
+
+
+
+
 
 
 
@@ -27,6 +32,13 @@ p.2 <- theorem_4(p.2,t,y[t])
 p.1 <- theorem_3(p.1,t,y[t])
 p.2 <- theorem_3(p.2,t,y[t])
 
+
+sumW <- Reduce("+",Map(function(p) return(p@weight),list(p.1,p.2)),0)
+for(p in list(p.1,p.2))
+{
+   print("here")
+   p@weight <- p@weight / sumW
+} 
 
 
 t <- t + 1L
