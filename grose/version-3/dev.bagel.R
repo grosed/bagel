@@ -1,4 +1,5 @@
- 
+
+library(curry)
 
 source("particle.R")
 source("example-2.R")
@@ -22,45 +23,22 @@ p <- theorem_3(p,t,Y[t])
 
 particles <- append(particles,p)
 
-#### temp for now
-#set_weight <- function(p,w)
-#{
-#  p@weight <- w
-#  return(p)
-#}
-
-
 for(t in 2:length(Y))
-# for(t in 2:2)
 {
    t <- as.integer(t)
    particles <- append(particles,theorem_2(particles[[1]],t)) # add the new particle
-
-  for(p in 1:length(particles))
-   {
-      particles[[p]] <- theorem_1(particles[[1]],particles[[p]],t)
-   }
-
-  for(p in 1:length(particles))
-   {
-      particles[[p]] <- theorem_4(particles[[p]],t,Y[t])
-   }
-   for(p in 1:length(particles))
-   {
-      particles[[p]] <- theorem_3(particles[[p]],t,Y[t])
-   }
-
-
-
+   particles <- Map(theorem_1 %><% list(object.1 = particles[[1]],t = t),particles)
+   particles <- Map(theorem_4 %><% list(t = t,y = Y[t]),particles)
+   particles <- Map(theorem_3 %><% list(t = t,y = Y[t]),particles)
    sumW <- Reduce("+",Map(function(.) .@weight,particles),0)
-
    particles <- Map(function(p) return(set_weight(p,p@weight/sumW)),particles) 
-
 }
 
 
-print("*****")
 
+
+
+print("*****")
 for(p in particles)
 {
   print(p@weight)

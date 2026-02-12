@@ -43,7 +43,12 @@ p<-1 ##parameter for prior on change location. p=1 gives uniform prior
 p0 <-0.9 ##prob of  no change at any time 
 ##data
 set.seed(0)
-y<-rnorm(100)
+
+# y<-rnorm(100)
+y <- c(rnorm(100),rnorm(100) + seq(1,100,1)/20)
+
+# store w_{0,t}
+ws <- c()
 
 ##initialise
 d1<-length(mu.beta)
@@ -128,7 +133,9 @@ while(t<=n){
   logw<-logw+log(sum(w))
   w<-w/sum(w)
   ###THIS IS WHERE YOU WOULD CHECK IS THERE IS EVIDENCE FOR A CHANGE/STOP THE ALGORITHM
-  
+
+  ws <- c(ws,w[1])
+
   ###THM 3 to update posterior parameters
   for(i in 1:t){
     if(i==1){
