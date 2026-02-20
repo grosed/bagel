@@ -121,7 +121,6 @@ setMethod("theorem_2",c("particle_type","integer"),
    		post.sigma.t <- rbind(cbind(top_left,top_right),
                                       cbind(bottom_left,bottom_right))
 		# mu
-
    		top <- as.matrix(object@post.mu[1:d1,1])
    		bottom <- mu.gamma.t + B %*% (as.matrix(object@post.mu[1:d1,1]) - mu.beta.t)
 		post.mu.t <- rbind(top,bottom)
@@ -149,7 +148,6 @@ setMethod("theorem_3",c("particle_type","integer","numeric"),
 	    A <- sigma %*% H.t%*% solve(Q)
 	    sigma <- sigma - A %*% t(A) * Q
 	    mu <- mu + A %*% e
-
             object@post.mu <- mu
 	    object@post.sigma <- sigma
 	    return(object)

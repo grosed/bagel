@@ -7,12 +7,7 @@
 #include "matrix.h"
  
 
-struct post_type
-{
-  
-  matrix mu;
-  matrix sigma;
-};
+typedef prior_type post_type;
 
 
 #endif
