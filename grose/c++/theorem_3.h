@@ -1,7 +1,7 @@
 
 
 #ifndef ___THEOREM_3_H___
-#define ___THEOREM_33_H___
+#define ___THEOREM_3_H___
 
 #include "particle.h"
 #include "time.h"
