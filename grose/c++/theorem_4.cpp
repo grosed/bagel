@@ -1,15 +1,9 @@
-
 #include "theorem_4.h"
 #include "dnorm.h"
 #include <cmath>
 
 particle_type& theorem_4(particle_type& particle_t, const time_type& t, const real_type& y)
 {
-
-  if(particle_t.tau == 0 && t == 0)
-    {
-      return(particle_t);
-    }
 
   // use temporary objects for now - optimise later
   matrix sigma_post = particle_t.post.sigma;

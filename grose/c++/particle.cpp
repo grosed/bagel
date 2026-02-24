@@ -31,7 +31,7 @@ particle_type::particle_type(const prior_function_type& _prior_function,
   p0 = _p0;
   p = _p;
   s = _s;
-  weight = 0.0;
+  weight = 1.0;
 }
 
 
