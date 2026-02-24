@@ -24,6 +24,8 @@ int main()
   std::list<particle_type> particles;
   particle_type initial_particle(prior_example_2,feature_vector_example_2,tau,p0,p,s);
   initial_particle = theorem_2(initial_particle,t);
+  initial_particle = theorem_1(initial_particle,initial_particle,t);
+  std::cout << initial_particle.weight << std::endl;
   try
     {
     while(cin)
@@ -34,17 +36,25 @@ int main()
 	// std::cout << y << std::endl;
 	if(t == 1)
 	  {
+	    initial_particle = theorem_4(initial_particle,t,y);
 	    initial_particle = theorem_3(initial_particle,t,y);
+	    std::cout << initial_particle.weight << std::endl;
 	  }
 	else
 	  {
 	    // new particle
 	    particles.push_back(theorem_2(initial_particle,t));
 	    // update particles
+	    initial_particle = theorem_1(initial_particle,initial_particle,t);
+	    initial_particle = theorem_4(initial_particle,t,y);
 	    initial_particle = theorem_3(initial_particle,t,y);
+	    std::cout << initial_particle.weight << std::endl;
 	    for(auto& p : particles)
 	      {
-		p = theorem_3(initial_particle,t,y);
+		p = theorem_1(initial_particle,p,t);
+		p = theorem_4(p,t,y);
+		p = theorem_3(p,t,y);
+		std::cout << p.weight << std::endl;
 	      }
 	  }
 	t = t + 1;

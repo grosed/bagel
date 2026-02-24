@@ -7,7 +7,9 @@
 
 
 
-real_type dnorm(const matrix&, const matrix&, const matrix&);
+real_type mvdnorm(const matrix&, const matrix&, const matrix&);
+
+real_type dnorm(const real_type&,const real_type&,const real_type&);
 
 
 #endif

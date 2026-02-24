@@ -9,6 +9,9 @@
 #include "particle.h"
 #include "theorem_2.h"
 #include "theorem_3.h"
+#include "theorem_1.h"
+#include "theorem_4.h"
+#include "dnorm.h"
 
 
 #endif
