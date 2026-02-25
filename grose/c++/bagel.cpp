@@ -31,12 +31,14 @@ bagel_type& update(bagel_type& bagel, const real_type& y)
 
 bagel_type& bagel_type::update(const real_type& y)
 {
+  /*
   if(particles.size() == 1000)
     {
       auto it = particles.begin();
       advance(it, 1);
       particles.erase(it);
     }
+  */
   
   if(t == 1)
     {
