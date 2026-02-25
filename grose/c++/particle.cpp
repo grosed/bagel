@@ -23,7 +23,7 @@ particle_type::particle_type(const prior_function_type& _prior_function,
 			     const tau_type& _tau,
 			     const real_type& _p0,
 			     const real_type& _p,
-			     const real_type& _s)
+			     const real_type& _s) 
 {
   prior_function = _prior_function;
   feature_vector_function = _feature_vector_function;
