@@ -45,7 +45,8 @@ p0 <-0.9 ##prob of  no change at any time
 set.seed(0)
 
 # y<-rnorm(100)
-y <- c(rnorm(100),rnorm(100) + seq(1,100,1)/20)
+y<-rnorm(1000)
+# y <- c(rnorm(100),rnorm(100) + seq(1,100,1)/20)
 
 # store w_{0,t}
 ws <- c()
@@ -72,6 +73,7 @@ w <- dnorm(y[1],t(a(t))%*%mu.beta,sqrt(var.pred))
 ##normalise weights
 logw<-logw+log(sum(w))
 w<-w/sum(w)
+
 
 ## DJG - i is not defined - think it needs to be 1 for this to work
 i <- 1
@@ -111,6 +113,8 @@ while(t<=n){
       w<-c(w[1],w[2:(t-1)]*(t-2)/(t-1),w[1]*(1-p0)/(p0*(t-1)))
     }
   }
+
+
   ###THM 4 to update weights
   for(i in 1:t){
     if(i==1){
@@ -160,10 +164,10 @@ while(t<=n){
   ##THE ABOVE WOULD BE MAINLY UNCHANGED EXCEPT WE HAVE USED THAT tau associate with entry i is tau=i-1 in definition of h.i
 
 
-if(t == n)
-{
-  browser()
-}
+#if(t == n)
+#{
+#  browser()
+#}
 
   ##increment t
   t<-t+1
