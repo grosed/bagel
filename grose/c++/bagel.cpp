@@ -1,7 +1,6 @@
 
 #include "bagel.h"
 
-
 bagel_type::bagel_type(const prior_function_type& prior_function,
 		       const feature_vector_function_type& feature_vector_function,
 		       const probability_type& p0,

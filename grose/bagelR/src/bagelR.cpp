@@ -16,11 +16,36 @@ int f(const int& x)
   return 2*x;
 }
 
+// temporary testing using c++ version with example_2
+#include "example_2.h"
 
-bagelR::bagelR(const double& _data)
+
+bagelR::bagelR(const probability_type& p0,
+	       const probability_type& p,
+	       const real_type& s)
+{
+  sp_bagel = std::make_shared<bagel_type>(prior_example_2,feature_vector_example_2,p0,p,s);
+  std::cout << "p0 is : " << p0 << std::endl;
+  std::cout << "p is : " << p << std::endl;
+  std::cout << "s is : " << s << std::endl;
+}
+
+
+real_type bagelR::update(const real_type& x)
+{
+  sp_bagel -> update(x);
+  return sp_bagel -> weight_0_t();
+}
+
+
+
+
+/*
+bagelR::bagelR(const probability_type& _data)
 {
   data = _data;
 }
+*/
 
 double bagelR::doit(const double& x)
 {
@@ -84,10 +109,12 @@ int bagelR::feature_vectors(Rcpp::List& fvs)
 RCPP_MODULE(bagelR) 
 {
   class_<bagelR >("bagelR")
-  .constructor<double>()
+    // .constructor<const probability_type&,const probability_type&,const real_type&>()
+  .constructor<probability_type,probability_type,real_type>()
   .method("doit", &bagelR::doit)
   .method("taus", &bagelR::taus)
   .method("feature_vectors", &bagelR::feature_vectors)
+  .method("update", &bagelR::update)
 ;
 }
 

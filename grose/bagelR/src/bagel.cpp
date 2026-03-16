@@ -1,6 +1,7 @@
 
 #include "bagel.h"
 
+#include <iostream>
 
 bagel_type::bagel_type(const prior_function_type& prior_function,
 		       const feature_vector_function_type& feature_vector_function,
@@ -39,6 +40,9 @@ bagel_type& bagel_type::update(const real_type& y)
       particles.erase(it);
     }
   */
+
+  std::cout << "t is : " << t << std::endl;
+
   
   if(t == 1)
     {
