@@ -29,7 +29,7 @@ struct bagel_type
   real_type weight_0_t() const;
 
   
-private:
+  // private:
   
   time_type t;
   probability_type p = 1.0;

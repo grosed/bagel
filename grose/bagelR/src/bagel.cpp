@@ -1,8 +1,6 @@
 
 #include "bagel.h"
 
-#include <iostream>
-
 bagel_type::bagel_type(const prior_function_type& prior_function,
 		       const feature_vector_function_type& feature_vector_function,
 		       const probability_type& p0,
@@ -32,16 +30,6 @@ bagel_type& update(bagel_type& bagel, const real_type& y)
 
 bagel_type& bagel_type::update(const real_type& y)
 {
-  /*
-  if(particles.size() == 1000)
-    {
-      auto it = particles.begin();
-      advance(it, 1);
-      particles.erase(it);
-    }
-  */
-
-  std::cout << "t is : " << t << std::endl;
 
   
   if(t == 1)

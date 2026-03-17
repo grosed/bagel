@@ -43,10 +43,65 @@ blob <- new(bagelR,p0,p,s)
 
 dat <- as.numeric(read.csv("./data/example_2.dat",header=FALSE)[[1]])
 
-res <- c()
+w0t <- c()
+t <- 1
 for(x in dat)
 {
-  res <- c(res,blob$update(x))
+  print(t)
+  taus <- blob$taus()
+  taus <- c(taus,t-1)
+  blob$feature_vectors(taus,Map(function(tau) return(H(t,tau)),taus))
+  w0t <- c(w0t,blob$update(x))
+  t <- t + 1
 }
+
+
+library(bagelR)
+
+p <- 1.0;
+p0 <- 0.9;
+s <- 1.0;
+
+set.seed(0)
+Z <- rnorm(4000,0,1)
+
+blob <- new(bagelR,p0,p,s)
+
+
+
+w0t <- c()
+t <- 1
+for(z in Z)
+{
+  # print(t)
+  taus <- blob$taus()
+  taus <- c(taus,t-1)
+  blob$feature_vectors(taus,Map(function(tau) return(H(t,tau)),taus))
+  w0t <- c(w0t,blob$update(x))
+  t <- t + 1
+}
+
+
+
+set.seed(0)
+Z <- rnorm(4000,0,1)
+
+blob <- new(bagelR,p0,p,s)
+
+
+
+w0t <- c()
+t <- 1
+for(z in Z)
+{
+  # print(t)
+  #taus <- blob$taus()
+  #taus <- c(taus,t-1)
+  #blob$feature_vectors(taus,Map(function(tau) return(H(t,tau)),taus))
+  w0t <- c(w0t,blob$update(x))
+  #t <- t + 1
+}
+
+
 
 

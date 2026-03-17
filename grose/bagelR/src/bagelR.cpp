@@ -9,6 +9,10 @@ using namespace Rcpp;
 
 #include "bagelR.h"
 
+#include <algorithm>
+
+
+
 
 // [[Rcpp::export]]
 int f(const int& x)
@@ -24,10 +28,16 @@ bagelR::bagelR(const probability_type& p0,
 	       const probability_type& p,
 	       const real_type& s)
 {
-  sp_bagel = std::make_shared<bagel_type>(prior_example_2,feature_vector_example_2,p0,p,s);
-  std::cout << "p0 is : " << p0 << std::endl;
-  std::cout << "p is : " << p << std::endl;
-  std::cout << "s is : " << s << std::endl;
+
+  // std::function<const double& (const int&)> G = std::bind(&B::F, b, std::placeholders::_1);
+
+  // std::function<const matrix& (const int&,const int&)> G = std::bind(&bagelR::H, *this, std::placeholders::_1,std::placeholders::_2);
+
+  feature_vector_function_type G =   std::bind(&bagelR::H, this, std::placeholders::_1,std::placeholders::_2);
+
+  
+  // sp_bagel = std::make_shared<bagel_type>(prior_example_2,feature_vector_example_2,p0,p,s);
+  sp_bagel = std::make_shared<bagel_type>(prior_example_2,G,p0,p,s);
 }
 
 
@@ -55,32 +65,28 @@ double bagelR::doit(const double& x)
 
 std::list<int> bagelR::taus()
 {
-  // just send a fixed number to test latency
-  std::list<int> tau_values;
-  for(int tau = 0; tau < 1000; tau++)
-    {
-      tau_values.push_front(tau);
-    }
-  return tau_values; 
+  std::list<int> ltaus;
+  std::transform(sp_bagel->particles.begin(),
+		 sp_bagel->particles.end(),
+		 std::inserter(ltaus,ltaus.end()),
+		 [](auto& particle){return particle.tau;});  
+  return ltaus;  
+}
+
+const matrix& bagelR::H(const int& t,const int& tau)
+{
+  return M[tau];
 }
 
 
-int bagelR::feature_vectors(const std::vector<matrix>& fvs)
-{
-  int n = fvs.size();
-  std::map<int,matrix> M;
-  int tau = 0;
-  for(auto& m : fvs)
-    {
-      M[tau] = m;
-      tau = tau + 1;
-    }
-  
-  for(int tau = 0; tau < n; tau++)
-    {
-      matrix k = M[tau]; 
-    }
-  
+int bagelR::feature_vectors(const std::vector<int>& taus, const std::list<matrix>& fvs)
+{ 
+  M.clear();
+  std::transform(taus.begin(),
+		 taus.end(),
+		 fvs.begin(),
+		 std::inserter(M,M.end()),
+		 [](auto& tau,auto& m){return std::make_pair(tau,m);});
   return 0;
 }
 
