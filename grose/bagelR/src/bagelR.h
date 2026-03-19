@@ -11,26 +11,21 @@
 #include <memory>
 
 struct bagelR
-{
-  double data;
-   
+{   
   std::shared_ptr<bagel_type> sp_bagel; 
-
-
   std::map<int,matrix> M;
-  const matrix& H(const int&,const int&);
-  
-  
+  std::map<int,prior_type> P;
+  const matrix& feature_vector_from_R(const int&,const int&);
+  const prior_type prior_from_R(const int&);
+   
   bagelR(const probability_type&,const probability_type&,const real_type&);
-  // bagelR(const probability_type&);
-  double doit(const double&);
   real_type update(const real_type&);
-  std::list<int> taus();
-  // int feature_vectors(Rcpp::List&);
-  // int feature_vectors(const std::vector<matrix>&);
-  int feature_vectors(const std::vector<int>&, const std::list<matrix>&);
+  std::list<int> get_taus();
+  void set_feature_vectors(const std::vector<int>&, const std::list<matrix>&);
+  double get_time();
+  void set_priors(const std::vector<int>&,const std::list<matrix>&,const std::list<matrix>&);
 
-  
+
 };
 
 

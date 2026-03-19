@@ -8,17 +8,7 @@ using namespace Rcpp;
 
 
 #include "bagelR.h"
-
 #include <algorithm>
-
-
-
-
-// [[Rcpp::export]]
-int f(const int& x)
-{
-  return 2*x;
-}
 
 // temporary testing using c++ version with example_2
 #include "example_2.h"
@@ -28,16 +18,9 @@ bagelR::bagelR(const probability_type& p0,
 	       const probability_type& p,
 	       const real_type& s)
 {
-
-  // std::function<const double& (const int&)> G = std::bind(&B::F, b, std::placeholders::_1);
-
-  // std::function<const matrix& (const int&,const int&)> G = std::bind(&bagelR::H, *this, std::placeholders::_1,std::placeholders::_2);
-
-  feature_vector_function_type G =   std::bind(&bagelR::H, this, std::placeholders::_1,std::placeholders::_2);
-
-  
-  // sp_bagel = std::make_shared<bagel_type>(prior_example_2,feature_vector_example_2,p0,p,s);
-  sp_bagel = std::make_shared<bagel_type>(prior_example_2,G,p0,p,s);
+  feature_vector_function_type G_feature_vector =   std::bind(&bagelR::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
+  prior_function_type G_prior =   std::bind(&bagelR::prior_from_R, this, std::placeholders::_1);
+  sp_bagel = std::make_shared<bagel_type>(G_prior,G_feature_vector,p0,p,s);
 }
 
 
@@ -49,21 +32,13 @@ real_type bagelR::update(const real_type& x)
 
 
 
-
-/*
-bagelR::bagelR(const probability_type& _data)
+double bagelR::get_time()
 {
-  data = _data;
-}
-*/
-
-double bagelR::doit(const double& x)
-{
-  return data + x;
+  return sp_bagel -> t;
 }
 
 
-std::list<int> bagelR::taus()
+std::list<int> bagelR::get_taus()
 {
   std::list<int> ltaus;
   std::transform(sp_bagel->particles.begin(),
@@ -73,53 +48,60 @@ std::list<int> bagelR::taus()
   return ltaus;  
 }
 
-const matrix& bagelR::H(const int& t,const int& tau)
+const matrix& bagelR::feature_vector_from_R(const int& t,const int& tau)
 {
   return M[tau];
 }
 
+const prior_type bagelR::prior_from_R(const int& t)
+{
+  return P[t];
+}
 
-int bagelR::feature_vectors(const std::vector<int>& taus, const std::list<matrix>& fvs)
+
+void bagelR::set_feature_vectors(const std::vector<int>& taus_from_R, const std::list<matrix>& feature_vectors_from_R)
 { 
   M.clear();
-  std::transform(taus.begin(),
-		 taus.end(),
-		 fvs.begin(),
+  std::transform(taus_from_R.begin(),
+		 taus_from_R.end(),
+		 feature_vectors_from_R.begin(),
 		 std::inserter(M,M.end()),
 		 [](auto& tau,auto& m){return std::make_pair(tau,m);});
-  return 0;
 }
 
-/*
-  // just send a fixed number to test latency
-int bagelR::feature_vectors(Rcpp::List& fvs)
+void bagelR::set_priors(const std::vector<int>& ts_from_R,
+			const std::list<matrix>& prior_mus_from_R,
+			const std::list<matrix>& prior_sigmas_from_R)
 {
-  matrix m = Rcpp::as<matrix>(fvs[0]);
+  P.clear();
   
-  int n = fvs.size();
-  std::map<int,matrix> M;
-  int tau = 0;
-  for(auto& m : fvs)
-    {
-      M[tau] = m;
-    }
-  
-    
-  return 0;
+  // zip into prior_types
+  std::list<prior_type> priors;
+  std::transform(prior_mus_from_R.begin(),
+		 prior_mus_from_R.end(),
+		 prior_sigmas_from_R.begin(),
+		 std::inserter(priors,priors.end()),
+		 [](auto& mu,auto& sigma){prior_type prior;
+		                          prior.mu = mu;
+					  prior.sigma = sigma;
+					  return prior;});
+  std::transform(ts_from_R.begin(),
+		 ts_from_R.end(),
+		 priors.begin(),
+		 std::inserter(P,P.end()),
+		 [](auto& t,auto& prior){return std::make_pair(t,prior);});
 }
-*/
-
 
 
 
 RCPP_MODULE(bagelR) 
 {
   class_<bagelR >("bagelR")
-    // .constructor<const probability_type&,const probability_type&,const real_type&>()
   .constructor<probability_type,probability_type,real_type>()
-  .method("doit", &bagelR::doit)
-  .method("taus", &bagelR::taus)
-  .method("feature_vectors", &bagelR::feature_vectors)
+  .method("get_time", &bagelR::get_time)
+  .method("get_taus", &bagelR::get_taus)
+  .method("set_feature_vectors", &bagelR::set_feature_vectors)
+  .method("set_priors", &bagelR::set_priors)
   .method("update", &bagelR::update)
 ;
 }

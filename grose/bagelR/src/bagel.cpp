@@ -28,6 +28,7 @@ bagel_type& update(bagel_type& bagel, const real_type& y)
   return bagel.update(y);
 }
 
+
 bagel_type& bagel_type::update(const real_type& y)
 {
 
@@ -61,9 +62,30 @@ bagel_type& bagel_type::update(const real_type& y)
       for(auto& p : particles)
 	{
 	  p.weight = p.weight/sum_of_weights;
-	}	    
+	}
+
+      int max_num_particles = 500; // 1000; // dummy test value
+      if(particles.size() > max_num_particles && particles.size() > 3)
+	{
+	  auto it_1 = particles.begin();
+	  it_1++;
+	  auto it_n_minus_1 = particles.end();
+	  it_n_minus_1--;
+	  it_n_minus_1--; 
+	  auto it_min = std::min_element(it_1,
+					 it_n_minus_1,
+					 [](auto& x,auto& y){return x.weight < y.weight;});		 
+	  auto it_right_of_min = it_min;
+	  it_right_of_min++;
+	  it_right_of_min -> weight += it_min -> weight;
+	  particles.erase(it_min);
+	}
     }
+  
   t = t + 1;
+
+
+  
   return *this;
 }
 
