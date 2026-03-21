@@ -5,19 +5,37 @@
 #include <string>
 #include <list>
 
+#include "process_args.h"
 
 using namespace std;
 
 std::string input_line;
 
-int main()
+int main(int argc, char* argv[])
 {
+
+  std::tuple<double,double,double> command_line_args;
+  try
+    {
+      command_line_args = process_args(argc,argv);
+    }
+  catch(const std::exception& e)
+    {
+      std::cerr << e.what() << std::endl;
+    }
   
   prior_function_type prior_function = prior_example_2;
   feature_vector_function_type feature_vector_function = feature_vector_example_2;
-  probability_type p = 1.0;
-  probability_type p0 = 0.9;
-  real_type s = 1.0;
+
+  //probability_type p = 1.0;
+  //probability_type p0 = 0.9;
+  //real_type s = 1.0;
+
+
+  
+  probability_type p0 = std::get<0>(command_line_args);
+  probability_type p = std::get<1>(command_line_args); 
+  real_type s = std::get<2>(command_line_args);
 
 
   bagel_type bagel(prior_function,feature_vector_function,p0,p,s);

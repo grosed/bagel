@@ -1,7 +1,7 @@
 
 
 #include "theorem_1.h"
-#include "real.h"
+#include "real_type.h"
 
 particle_type& theorem_1(particle_type& particle_1,particle_type& particle_t, const time_type& t)
 {

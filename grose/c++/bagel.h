@@ -1,12 +1,12 @@
 #ifndef ___BAGEL_H___
 #define ___BAGEL_H___
 
-#include "probability.h"
-#include "time.h"
-#include "real.h"
-#include "tau.h"
-#include "time.h"
-#include "particle.h"
+#include "probability_type.h"
+#include "time_type.h"
+#include "real_type.h"
+#include "tau_type.h"
+#include "time_type.h"
+#include "particle_type.h"
 #include "theorem_2.h"
 #include "theorem_3.h"
 #include "theorem_1.h"
@@ -29,7 +29,7 @@ struct bagel_type
   real_type weight_0_t() const;
 
   
-private:
+  // private:
   
   time_type t;
   probability_type p = 1.0;
