@@ -5,9 +5,11 @@ bagel_type::bagel_type(const prior_function_type& prior_function,
 		       const feature_vector_function_type& feature_vector_function,
 		       const probability_type& p0,
 		       const probability_type& p,
-		       const real_type& s)
+		       const real_type& s,
+		       const int& n)
 {
   t = 1;
+  max_num_particles = n;
   initial_particle = particle_type(prior_function,feature_vector_function,0,p0,p,s);
 }
 
@@ -64,7 +66,6 @@ bagel_type& bagel_type::update(const real_type& y)
 	  p.weight = p.weight/sum_of_weights;
 	}
 
-      int max_num_particles = 500; // 1000; // dummy test value
       if(particles.size() > max_num_particles && particles.size() > 3)
 	{
 	  auto it_1 = particles.begin();

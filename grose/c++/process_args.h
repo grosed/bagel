@@ -5,6 +5,6 @@
 #include <tuple>
 #include <stdexcept>
 
-std::tuple<double,double,double> process_args(int, char**);
+std::tuple<double,double,double,int> process_args(int, char**);
 
 #endif

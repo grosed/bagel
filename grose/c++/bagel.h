@@ -23,7 +23,8 @@ struct bagel_type
 	     const feature_vector_function_type&,
 	     const probability_type&,
 	     const probability_type&,
-	     const real_type&);
+	     const real_type&,
+	     const int&);
 
   bagel_type& update(const real_type&);
   real_type weight_0_t() const;
@@ -32,9 +33,16 @@ struct bagel_type
   // private:
   
   time_type t;
+  /*
   probability_type p = 1.0;
   probability_type p0 = 0.9;
   real_type s = 1.0;
+  */
+  probability_type p;
+  probability_type p0;
+  real_type s;
+  int max_num_particles; 
+  
   particle_type initial_particle;
   std::list<particle_type> particles;
 

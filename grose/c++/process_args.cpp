@@ -3,10 +3,11 @@
 #include "process_args.h" 
 
 
-std::tuple<double,double,double> process_args(int argc, char** argv)
+std::tuple<double,double,double,int> process_args(int argc, char** argv)
 {
       double p0 = 0, p = 0, s = 0;
-      bool hasp0 = false, hasp = false, hass = false;
+      int n = 0;
+      bool hasp0 = false, hasp = false, hass = false, hasn = false;
 
       
       for (int i = 1; i < argc; ++i)
@@ -28,15 +29,20 @@ std::tuple<double,double,double> process_args(int argc, char** argv)
 	      s = std::stod(argv[++i]);
 	      hass = true;
 	    }
+	  else if (arg == "--n" && i + 1 < argc)
+	    {
+	      n = std::stoi(argv[++i]);
+	      hasn = true;
+	    }
 	  else
 	    {
 	      throw std::runtime_error("Unknown or incomplete argument: " + arg);
 	    }
 	}
-      if (!hasp0 || !hasp || !hass)
+      if (!hasp0 || !hasp || !hass || !hasn)
 	{
-	  throw std::runtime_error("Usage: " + std::string(argv[0]) + " --p0 <value> --p <value> --s <value>");
+	  throw std::runtime_error("Usage: " + std::string(argv[0]) + " --p0 <value> --p <value> --s <value> --n <value>");
 	}				 
       
-    return std::tuple<double,double,double>(p0,p,s);
+      return std::tuple<double,double,double,int>(p0,p,s,n);
 }
