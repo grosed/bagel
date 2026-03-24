@@ -1,11 +1,11 @@
 Package: bagelR
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: Fast Univariate Online Changepoint Detection
+Version: 1.0.0
 Date: 2026-02-26
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Daniel Grose
+Maintainer: Daniel Grose <dan.grose@lancaster.ac.uk>
+Description: Fast Univariate Online Changepoint Detection
+License: GPL (>= 2)
 Imports: Rcpp (>= 1.1.1)
 LinkingTo: Rcpp, RcppEigen, BH

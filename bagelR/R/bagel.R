@@ -32,7 +32,7 @@ setMethod("update","bagel_type",
   	    prior_mus <- Map(function(x) return(x$mu), priors)
   	    prior_sigmas <- Map(function(x) x$sigma, priors)		
   	    bagel_object$set_priors(ts,prior_mus,prior_sigmas)
-	    return(bagel_object$update(x))
+	    return(bagel_object$update(y))
 	  })
 
 # weights
