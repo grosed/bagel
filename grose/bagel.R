@@ -1,5 +1,3 @@
-library(collections)
-source("particle.R")
 
 # type
 setClass("bagel_type", slots=list(particle_constructor = "function",
@@ -18,47 +16,34 @@ bagel <- function(particle_constructor,prior,H)
 setMethod("update","bagel_type",
           function(object,y)
 	  {
-
-	     theorem_2 <- function(t)
-	     {
-		if(t == 1) # this is the first particle
-		{
-			prior <- object@prior(t)
-     			H <- object@H(t,t)
-     			# create the particle
-     			particle <- object@particle_constructor(prior$mu,prior$sigma,H)
-			return(particle)		   			
-		}
-		# create a new particle from the first
-		# TODO
-	     }
-
-
-             theorem_3 <- function(t,tau)
-             {
-	        # THEOREM 3
-     		particle <- update(particle,y)
-     		# add it to the population
-     		object@particles$set(object@t,particle)
-		return(object)
-	     }
+	    bagel_object <- object@bagel_object 
+	    H <- object@H
+	    prior <- object@prior
+            taus <- bagel_object$get_taus()
+  	    t <- bagel_object$get_time()
+  	    taus <- c(taus,t-1)
+  	    bagel_object$set_feature_vectors(taus,Map(function(tau) return(H(t,tau)),taus))
+  	    ts <- c(taus[-1],t)				  
+  	    priors <- Map(prior,ts)
+  	    prior_mus <- Map(function(x) return(x$mu), priors)
+  	    prior_sigmas <- Map(function(x) x$sigma, priors)		
+  	    bagel_object$set_priors(ts,prior_mus,prior_sigmas)
+	    return(bagel_object$update(x))
+	  })
 
 
-	     object@particles$set(t) <- theorem_2(t)
-
-	     for(tau in 1:t)
-	     {
-	        object@particles$set(tau) <- the
-	     }
 
 
-   	     if(object@t == 1)
-   	     {
-	        
-	        return(theorem_3())
-             }
+
+
+
+
+
+
+
+
 	
 
-	  })
+
 
 

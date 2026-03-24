@@ -1,5 +1,5 @@
 
-#include "prior.h"
+#include "prior_type.h"
 
 
 prior_type& prior_type::operator=(const prior_type& other)

@@ -1,6 +1,6 @@
 
-#ifndef ___MATRIX_H___
-#define ___MATRIX_H___
+#ifndef ___MATRIX_TYPE_H___
+#define ___MATRIX_TYPE_H___
 
 #include <Eigen/Dense> 
 

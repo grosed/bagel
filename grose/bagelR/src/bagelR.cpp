@@ -16,11 +16,12 @@ using namespace Rcpp;
 
 bagelR::bagelR(const probability_type& p0,
 	       const probability_type& p,
-	       const real_type& s)
+	       const real_type& s,
+	       const int& n)
 {
   feature_vector_function_type G_feature_vector =   std::bind(&bagelR::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
   prior_function_type G_prior =   std::bind(&bagelR::prior_from_R, this, std::placeholders::_1);
-  sp_bagel = std::make_shared<bagel_type>(G_prior,G_feature_vector,p0,p,s);
+  sp_bagel = std::make_shared<bagel_type>(G_prior,G_feature_vector,p0,p,s,n);
 }
 
 
@@ -29,6 +30,21 @@ real_type bagelR::update(const real_type& x)
   sp_bagel -> update(x);
   return sp_bagel -> weight_0_t();
 }
+
+
+std::list<double> bagelR::get_weights()
+{
+
+  std::list<double> lweights;
+  std::transform(sp_bagel->particles.begin(),
+		 sp_bagel->particles.end(),
+		 std::inserter(lweights,lweights.end()),
+		 [](auto& particle){return particle.weight;});  
+  return lweights;  
+}
+  
+  
+
 
 
 
@@ -97,9 +113,10 @@ void bagelR::set_priors(const std::vector<int>& ts_from_R,
 RCPP_MODULE(bagelR) 
 {
   class_<bagelR >("bagelR")
-  .constructor<probability_type,probability_type,real_type>()
+    .constructor<probability_type,probability_type,real_type,int>()
   .method("get_time", &bagelR::get_time)
   .method("get_taus", &bagelR::get_taus)
+  .method("get_weights", &bagelR::get_weights)
   .method("set_feature_vectors", &bagelR::set_feature_vectors)
   .method("set_priors", &bagelR::set_priors)
   .method("update", &bagelR::update)

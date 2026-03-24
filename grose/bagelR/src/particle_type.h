@@ -1,13 +1,13 @@
 
-#ifndef ___PARTICLE_H___
-#define ___PARTICLE_H___
+#ifndef ___PARTICLE_TYPE_H___
+#define ___PARTICLE_TYPE_H___
 
 
-#include "prior.h"
-#include "post.h"
-#include "feature_vector.h"
-#include "real.h"
-#include "tau.h"
+#include "prior_type.h"
+#include "post_type.h"
+#include "feature_vector_type.h"
+#include "real_type.h"
+#include "tau_type.h"
 
 
 struct particle_type

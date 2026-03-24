@@ -1,4 +1,3 @@
 useDynLib(bagelR, .registration=TRUE)
 import(methods,Rcpp)
-# export(f)
 exportPattern("^[[:alpha:]]+")

@@ -1,9 +1,9 @@
 
-#ifndef ___PRIOR_H___
-#define ___PRIOR_H___
+#ifndef ___PRIOR_TYPE_H___
+#define ___PRIOR_TYPE_H___
 
 #include <functional>
-#include "matrix.h"
+#include "matrix_type.h"
  
 
 struct prior_type

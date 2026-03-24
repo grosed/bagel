@@ -1,8 +1,8 @@
 
 #include "theorem_3.h"
-#include "matrix.h"
-#include "particle.h"
-#include "tau.h"
+#include "matrix_type.h"
+#include "particle_type.h"
+#include "tau_type.h"
 
 
 // modifies exiting particles - mutating

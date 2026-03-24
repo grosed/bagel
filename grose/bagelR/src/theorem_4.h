@@ -3,9 +3,9 @@
 #ifndef ___THEOREM_4_H___
 #define ___THEOREM_4_H___
 
-#include "particle.h"
-#include "time.h"
-#include "real.h"
+#include "particle_type.h"
+#include "time_type.h"
+#include "real_type.h"
 
 particle_type& theorem_4(particle_type&, const time_type&, const real_type&);
 

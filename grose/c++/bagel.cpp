@@ -41,7 +41,7 @@ bagel_type& bagel_type::update(const real_type& y)
       initial_particle = theorem_1(initial_particle,initial_particle,t);
       initial_particle = theorem_4(initial_particle,t,y);
       initial_particle = theorem_3(initial_particle,t,y);
-      initial_particle.weight = p0; 
+      initial_particle.weight = initial_particle.p0; 
       particles.push_back(initial_particle);
     }
   else
