@@ -56,7 +56,7 @@ setGeneric("time",function(object) standardGeneric("time"))
 setMethod("time","bagel_type",
           function(object)
 	  {
-	    return(object@bagel_object$get_time())
+	    return(object@bagel_object$get_time()-1)
 	  })
 
 
