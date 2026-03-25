@@ -1,0 +1,2 @@
+
+head -n 5000  test-data.txt |  ./bagel-online --p0 0.9 --p 1.0 --s 1.0 --n 500 | gnuplot -e "plot '-' w lp; pause 99"
