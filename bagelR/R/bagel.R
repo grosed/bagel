@@ -1,5 +1,5 @@
 
-NOTE - real time < streamed < online < sequential. where a < b => a is more specialised than b 
+### NOTE - real time < streamed < online < sequential. where a < b => a is more specialised than b 
 
 ### online (it has O(1) latency but O(n) storage  - so it is online - but not streamed or real time !!)  
 
