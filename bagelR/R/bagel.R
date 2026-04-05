@@ -9,9 +9,8 @@ setClass("bagel_type", slots=list(H = "function",
 				  bagel_object = "Rcpp_bagelR"))
 
 # constructor
-bagel <- function(H,prior,p0,p,s,n)
+bagel_instance <- function(H,prior,p0,p,s,n)
 {
-
 return(new("bagel_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,bagel_object=new(bagelR,p0,p,s,n)))	
 }
 
