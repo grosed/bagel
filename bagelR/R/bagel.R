@@ -1,4 +1,8 @@
 
+NOTE - real time < streamed < online < sequential. where a < b => a is more specialised than b 
+
+### online (it has O(1) latency but O(n) storage  - so it is online - but not streamed or real time !!)  
+
 # type
 setClass("bagel_type", slots=list(H = "function",
       		       		  prior = "function",
@@ -9,7 +13,7 @@ setClass("bagel_type", slots=list(H = "function",
 				  bagel_object = "Rcpp_bagelR"))
 
 # constructor
-bagel_instance <- function(H,prior,p0,p,s,n)
+bagel_online <- function(H,prior,p0,p,s,n)
 {
 return(new("bagel_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,bagel_object=new(bagelR,p0,p,s,n)))	
 }
@@ -57,5 +61,44 @@ setMethod("time","bagel_type",
 	  {
 	    return(object@bagel_object$get_time()-1)
 	  })
+
+
+
+### off line interface
+
+
+# type
+setClass("bagel_results_type", slots=list(H = "function",
+      		       			  prior = "function",
+				  	  p0 = "numeric",
+				  	  p = "numeric",
+				  	  s = "numeric",
+				  	  n = "numeric",
+				          threshold = "numeric",
+					  w0t = "vector",
+					  y = "data"))
+
+# constructor
+bagel_results <- function(H,prior,p0,p,s,n,threshold,w0t)
+{
+return(new("bagel_results_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,threshold=threshold,w0t=w0t))	
+}
+
+
+
+bagel <- function(H,prior,p0,p,s,n,threshold,y)
+{
+
+model <- bagel_online(H,prior,p0,p,s,n)
+
+w0t <- c()
+for(yt in Y)
+{
+  w0 <- update(model,yt)
+  w0t <- c(w0t,w0) # log the result  
+}
+
+return(bagel_results(H,prior,p0,p,s,n,w0t,y))
+}
 
 
