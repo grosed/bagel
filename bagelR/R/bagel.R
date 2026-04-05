@@ -88,17 +88,14 @@ return(new("bagel_results_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,threshold=thre
 
 bagel <- function(H,prior,p0,p,s,n,threshold,y)
 {
-
-model <- bagel_online(H,prior,p0,p,s,n)
-
-w0t <- c()
-for(yt in Y)
-{
-  w0 <- update(model,yt)
-  w0t <- c(w0t,w0) # log the result  
-}
-
-return(bagel_results(H,prior,p0,p,s,n,w0t,y))
+   model <- bagel_online(H,prior,p0,p,s,n)
+   w0t <- c()
+   for(yt in Y)
+   {
+	w0 <- update(model,yt)
+   	w0t <- c(w0t,w0) # log the result  
+   }
+   return(bagel_results(H,prior,p0,p,s,n,w0t,y))
 }
 
 
