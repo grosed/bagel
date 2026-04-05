@@ -93,7 +93,7 @@ bagel_offline <- function(H,prior,p0,p,s,n,threshold,y)
 	w0 <- update(model,yt)
    	w0t <- c(w0t,w0) # log the result  
    }
-   return(bagel_results(H,prior,p0,p,s,n,w0t,y))
+   return(bagel_results(H,prior,p0,p,s,n,threshold,w0t,y))
 }
 
 
