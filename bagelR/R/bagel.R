@@ -84,9 +84,7 @@ bagel_results <- function(H,prior,p0,p,s,n,threshold,w0t)
 return(new("bagel_results_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,threshold=threshold,w0t=w0t))	
 }
 
-
-
-bagel <- function(H,prior,p0,p,s,n,threshold,y)
+bagel_offline <- function(H,prior,p0,p,s,n,threshold,y)
 {
    model <- bagel_online(H,prior,p0,p,s,n)
    w0t <- c()

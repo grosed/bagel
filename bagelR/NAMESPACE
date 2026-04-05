@@ -1,4 +1,4 @@
 useDynLib(bagelR, .registration=TRUE)
 import(methods,Rcpp)
 exportPattern("^[[:alpha:]]+")
-export(bagel)
+export(bagel_offline)
