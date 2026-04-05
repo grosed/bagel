@@ -79,9 +79,9 @@ setClass("bagel_results_type", slots=list(H = "function",
 					  y = "data"))
 
 # constructor
-bagel_results <- function(H,prior,p0,p,s,n,threshold,w0t)
+bagel_results <- function(H,prior,p0,p,s,n,threshold,w0t,y)
 {
-return(new("bagel_results_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,threshold=threshold,w0t=w0t))	
+return(new("bagel_results_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,threshold=threshold,w0t=w0t,y=y))	
 }
 
 bagel_offline <- function(H,prior,p0,p,s,n,threshold,y)
