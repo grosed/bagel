@@ -76,7 +76,7 @@ setClass("bagel_results_type", slots=list(H = "function",
 				  	  n = "numeric",
 				          threshold = "numeric",
 					  w0t = "vector",
-					  y = "data"))
+					  y = "vector"))
 
 # constructor
 bagel_results <- function(H,prior,p0,p,s,n,threshold,w0t,y)
