@@ -49,11 +49,21 @@ int main(int argc, char* argv[])
         getline(cin, input_line);
 	double y = std::stod(input_line);
 	bagel = update(bagel,y);
+	std::cout << weight_0_t(bagel) << std::endl;
 	if(1.0 - weight_0_t(bagel) > t)
 	  {
+	    std::cout << std::endl;
+	    auto particle_ratios = bagel.ratios();
+	    for(auto& rs : particle_ratios)
+	      {		
+		for(auto& r : rs)
+		  {
+		    std::cout << r << " ";
+		  }
+		std::cout << std::endl;
+	      }
 	    break;
 	  }
-	std::cout << weight_0_t(bagel) << std::endl;
 	
       };
         

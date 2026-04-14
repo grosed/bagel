@@ -19,10 +19,29 @@ real_type bagel_type::weight_0_t() const
   return particles.front().weight;
 }
 
+std::list<std::list<ratio_type> > bagel_type::ratios() const
+{
+  std::list<std::list<ratio_type> >  particle_ratios;
+  for(auto& p : particles)
+    {
+      particle_ratios.push_back(p.ratios);
+    }
+  return particle_ratios;
+
+}
+
+
 real_type weight_0_t(const bagel_type& bagel)
 {
   return bagel.weight_0_t();
 }
+
+
+std::list<std::list<ratio_type> > ratios(const bagel_type& bagel)
+{
+  return bagel.ratios();
+}
+
 
 
 bagel_type& update(bagel_type& bagel, const real_type& y)
@@ -66,6 +85,7 @@ bagel_type& bagel_type::update(const real_type& y)
 	  p.weight = p.weight/sum_of_weights;
 	}
 
+      // prune
       if(particles.size() > max_num_particles && particles.size() > 3)
 	{
 	  auto it_1 = particles.begin();
@@ -78,7 +98,24 @@ bagel_type& bagel_type::update(const real_type& y)
 					 [](auto& x,auto& y){return x.weight < y.weight;});		 
 	  auto it_right_of_min = it_min;
 	  it_right_of_min++;
+	  // update ratios
+	  auto combined_weight = it_right_of_min -> weight + it_min -> weight;
+	  auto weight = it_min -> weight;
+	  std::transform(it_min->ratios.begin(),
+			 it_min->ratios.end(),
+			 it_min->ratios.begin(),
+			 [&combined_weight,&weight](auto& ratio){return ratio*weight/combined_weight;});
+	  weight = it_right_of_min -> weight;
+	  std::transform(it_right_of_min->ratios.begin(),
+			 it_right_of_min->ratios.end(),
+			 it_right_of_min->ratios.begin(),
+			 [&combined_weight,&weight](auto& ratio){return ratio*weight/combined_weight;});
+	  it_right_of_min->ratios.insert(it_right_of_min->ratios.begin(),it_min->ratios.begin(),it_min->ratios.end());
+	  
+	  // update weights
 	  it_right_of_min -> weight += it_min -> weight;
+
+	  // evict the pruned particle
 	  particles.erase(it_min);
 	}
     }

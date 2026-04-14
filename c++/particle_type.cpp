@@ -15,6 +15,7 @@ particle_type& particle_type::operator=(const particle_type& other)
   s = other.s;
   post = other.post;
   weight = other.weight;
+  ratios = other.ratios;
   return *this;
 }
 
@@ -32,6 +33,7 @@ particle_type::particle_type(const prior_function_type& _prior_function,
   p = _p;
   s = _s;
   weight = 1.0;
+  ratios.push_front(1.0);
 }
 
 
