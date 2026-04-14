@@ -78,7 +78,8 @@ setMethod("time","bagel_type",
 
 
 # type
-setClass("bagel_results_type", slots=list(feature_vector_function = "function",
+setClass("bagel_results_type", slots=list(bagel_object = "bagel_type",
+                                          feature_vector_function = "function",
       		       			  prior_function = "function",
 				  	  p0 = "numeric",
 				  	  p = "numeric",
@@ -89,7 +90,8 @@ setClass("bagel_results_type", slots=list(feature_vector_function = "function",
 					  y = "vector"))
 
 # constructor
-bagel_results <- function(feature_vector_function,
+bagel_results <- function(bagel_object,
+                          feature_vector_function,
                           prior_function,
 			  p0,
 			  p,
@@ -99,7 +101,8 @@ bagel_results <- function(feature_vector_function,
 			  w0t,
 			  y)
 {
-return(new("bagel_results_type",feature_vector_function=feature_vector_function,
+return(new("bagel_results_type",bagel_object=bagel_object,
+                                feature_vector_function=feature_vector_function,
 				prior_function=prior_function,
 				p0=p0,
 				p=p,
@@ -111,7 +114,7 @@ return(new("bagel_results_type",feature_vector_function=feature_vector_function,
 }
 
 bagel_offline <- function(feature_vector_function,
-			  prior_function,
+	 		  prior_function,
 			  p0,
 			  p,
 			  noise_sd,
@@ -119,21 +122,51 @@ bagel_offline <- function(feature_vector_function,
 			  threshold,
 			  y)
 {
-   model <- bagel_online(feature_vector_function,
-                         prior_function,
-			 p0,
-			 p,
-			 noise_sd,
-			 max_particles)
+   bagel_object <- bagel_online(feature_vector_function,
+                                prior_function,
+			        p0,
+			        p,
+			        noise_sd,
+			        max_particles)
    w0t <- c()
    for(yt in y)
    {
-	w0 <- update(model,yt)
+	w0 <- update(bagel_object,yt)
    	w0t <- c(w0t,w0) # log the result
 	if(1.0 - w0 > threshold) { break }
    }
    
-   return(bagel_results(feature_vector,prior_function,p0,p,noise_sd,max_particles,threshold,w0t,y))
+   return(bagel_results(bagel_object,feature_vector,prior_function,p0,p,noise_sd,max_particles,threshold,w0t,y))
 }
 
+
+# weights
+setMethod("weights","bagel_results_type",
+          function(object)
+	  {
+	    return(weights(object@bagel_object))
+	  })
+
+# taus
+setMethod("taus","bagel_results_type",
+          function(object)
+	  {
+	    return(taus(object@bagel_object))
+	  })
+
+# time
+setMethod("time","bagel_results_type",
+          function(object)
+	  {
+	    return(time(object@bagel_object))
+	  })
+
+
+# weights
+setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
+setMethod("weights_tau_zero","bagel_results_type",
+          function(object)
+	  {
+	    return(object@w0t)
+	  })
 
