@@ -43,11 +43,6 @@ std::list<double> bagelR::get_weights()
   return lweights;  
 }
   
-  
-
-
-
-
 double bagelR::get_time()
 {
   return sp_bagel -> t;
@@ -110,6 +105,12 @@ void bagelR::set_priors(const std::vector<int>& ts_from_R,
 
 
 
+std::list<std::list<double> > bagelR::get_ratios()
+{
+  return sp_bagel -> ratios();
+}
+
+
 RCPP_MODULE(bagelR) 
 {
   class_<bagelR >("bagelR")
@@ -120,6 +121,7 @@ RCPP_MODULE(bagelR)
   .method("set_feature_vectors", &bagelR::set_feature_vectors)
   .method("set_priors", &bagelR::set_priors)
   .method("update", &bagelR::update)
+  .method("get_ratios", &bagelR::get_ratios)
 ;
 }
 

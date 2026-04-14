@@ -25,8 +25,7 @@ struct bagelR
   void set_feature_vectors(const std::vector<int>&, const std::list<matrix>&);
   double get_time();
   void set_priors(const std::vector<int>&,const std::list<matrix>&,const std::list<matrix>&);
-
-
+  std::list<std::list<double> > get_ratios();
 };
 
 

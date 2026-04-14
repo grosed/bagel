@@ -56,6 +56,15 @@ setMethod("weights","bagel_type",
 	    return(object@bagel_object$get_weights())
 	  })
 
+
+# weights
+setGeneric("ratios",function(object) standardGeneric("ratios"))
+setMethod("ratios","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_ratios())
+	  })
+
 # taus
 setGeneric("taus",function(object) standardGeneric("taus"))
 setMethod("taus","bagel_type",
@@ -168,5 +177,13 @@ setMethod("weights_tau_zero","bagel_results_type",
           function(object)
 	  {
 	    return(object@w0t)
+	  })
+
+
+# weights
+setMethod("ratios","bagel_results_type",
+          function(object)
+	  {
+	    return(ratios(object@bagel_object))	
 	  })
 
