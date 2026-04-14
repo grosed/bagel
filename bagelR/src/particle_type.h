@@ -8,6 +8,8 @@
 #include "feature_vector_type.h"
 #include "real_type.h"
 #include "tau_type.h"
+#include "ratio_type.h"
+#include <list>
 
 
 struct particle_type
@@ -20,6 +22,7 @@ struct particle_type
   real_type s;
   post_type post;
   real_type weight;
+  std::list<ratio_type> ratios;
   particle_type();
   particle_type(const prior_function_type&,
 		const feature_vector_function_type&,

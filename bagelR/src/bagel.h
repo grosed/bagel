@@ -4,6 +4,7 @@
 #include "probability_type.h"
 #include "time_type.h"
 #include "real_type.h"
+#include "ratio_type.h"
 #include "tau_type.h"
 #include "time_type.h"
 #include "matrix_type.h"
@@ -13,8 +14,6 @@
 #include "theorem_1.h"
 #include "theorem_4.h"
 #include "dnorm.h"
-
-
 #include <list>
 
 
@@ -30,7 +29,7 @@ struct bagel_type
 
   bagel_type& update(const real_type&);
   real_type weight_0_t() const;
-
+  std::list<std::list<ratio_type> > ratios() const;
   
   // private:
   
@@ -52,7 +51,7 @@ struct bagel_type
 
 real_type weight_0_t(const bagel_type&);
 bagel_type& update(bagel_type&, const real_type&);
-
+std::list<std::list<ratio_type> > ratios(const bagel_type&);
 
 
 
