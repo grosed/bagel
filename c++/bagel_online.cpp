@@ -14,7 +14,7 @@ std::string input_line;
 int main(int argc, char* argv[])
 {
 
-  std::tuple<double,double,double,int> command_line_args;
+  std::tuple<double,double,double,int,double> command_line_args;
   try
     {
       command_line_args = process_args(argc,argv);
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
   probability_type p = std::get<1>(command_line_args); 
   real_type s = std::get<2>(command_line_args);
   int n = std::get<3>(command_line_args);
-
+  real_type t = std::get<4>(command_line_args);
 
   bagel_type bagel(prior_function,feature_vector_function,p0,p,s,n);
   
@@ -49,6 +49,10 @@ int main(int argc, char* argv[])
         getline(cin, input_line);
 	double y = std::stod(input_line);
 	bagel = update(bagel,y);
+	if(1.0 - weight_0_t(bagel) > t)
+	  {
+	    break;
+	  }
 	std::cout << weight_0_t(bagel) << std::endl;
 	
       };
