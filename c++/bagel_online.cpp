@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
   // dummy
   real_type lst_nu = 1.0;
-  real_type lst_mu =0.0;
+  real_type lst_mu = 0.0;
 
   
   bagel_type bagel(prior_function,feature_vector_function,p0,p,s,lst_nu,lst_mu,n);
