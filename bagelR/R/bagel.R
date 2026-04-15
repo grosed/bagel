@@ -153,8 +153,30 @@ bagel_offline <- function(feature_vector_function,
 setMethod("weights","bagel_results_type",
           function(object)
 	  {
+	    return(Reduce(c,Map("*",weights(object@bagel_object),ratios(object@bagel_object))))
+	  })
+
+
+# active weights
+setGeneric("active_weights",function(object) standardGeneric("active_weights"))
+setMethod("active_weights","bagel_results_type",
+          function(object)
+	  {
 	    return(weights(object@bagel_object))
 	  })
+
+# changepoint
+setGeneric("changepoint",function(object) standardGeneric("changepoint"))
+setMethod("changepoint","bagel_results_type",
+          function(object)
+	  {
+	    if(time(object) == length(object@y))
+	    {
+		return(NA)
+	    }
+	    return(list("location"=which.max(weights(object)[-1]),"detected"=time(object)))
+	  })
+
 
 # taus
 setMethod("taus","bagel_results_type",
