@@ -27,6 +27,7 @@ struct bagel_type
 	     const real_type&,
 	     const real_type&,
 	     const real_type&,
+	     const bool&,
 	     const int&);
 
   bagel_type& update(const real_type&);

@@ -26,7 +26,7 @@ particle_type& theorem_3(particle_type& particle_t, const time_type& t, const re
   particle_t.post.sigma = sigma;
 
   particle_t.lst_nu = particle_t.lst_nu + 0.5;
-  particle_t.lst_mu = particle_t.lst_mu + 0.5*e(0,0)*e(0,0)/Q(0,0);  
+  particle_t.lst_iota = particle_t.lst_iota + 0.5*e(0,0)*e(0,0)/Q(0,0);  
 
   
   return particle_t;

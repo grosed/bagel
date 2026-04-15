@@ -21,10 +21,11 @@ struct particle_type
   real_type p;
   real_type s;
   real_type lst_nu;
-  real_type lst_mu;
+  real_type lst_iota;
   post_type post;
   real_type weight;
   std::list<ratio_type> ratios;
+  bool known_variance;
   particle_type();
   particle_type(const prior_function_type&,
 		const feature_vector_function_type&,
@@ -33,7 +34,8 @@ struct particle_type
 		const real_type&,
 		const real_type&,
 		const real_type&,
-		const real_type&);
+		const real_type&,
+		const bool&);
   particle_type& operator=(const particle_type&);
 };
 

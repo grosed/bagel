@@ -62,7 +62,7 @@ particle_type theorem_2(const particle_type& particle_0, const time_type& t)
   particle_t.tau= t - 1;
 
   particle_t.lst_nu = particle_0.lst_nu;
-  particle_t.lst_mu = particle_0.lst_mu;
+  particle_t.lst_iota = particle_0.lst_iota;
 
   return particle_t;
   
