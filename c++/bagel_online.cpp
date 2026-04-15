@@ -39,7 +39,12 @@ int main(int argc, char* argv[])
   int n = std::get<3>(command_line_args);
   real_type t = std::get<4>(command_line_args);
 
-  bagel_type bagel(prior_function,feature_vector_function,p0,p,s,n);
+  // dummy
+  real_type lst_nu = 1.0;
+  real_type lst_mu =0.0;
+
+  
+  bagel_type bagel(prior_function,feature_vector_function,p0,p,s,lst_nu,lst_mu,n);
   
   try
     {

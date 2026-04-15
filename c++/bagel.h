@@ -25,6 +25,8 @@ struct bagel_type
 	     const probability_type&,
 	     const probability_type&,
 	     const real_type&,
+	     const real_type&,
+	     const real_type&,
 	     const int&);
 
   bagel_type& update(const real_type&);

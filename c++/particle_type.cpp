@@ -13,6 +13,8 @@ particle_type& particle_type::operator=(const particle_type& other)
   p0 = other.p0;
   p = other.p;
   s = other.s;
+  lst_nu = other.lst_nu;
+  lst_mu = other.lst_mu;
   post = other.post;
   weight = other.weight;
   ratios = other.ratios;
@@ -24,7 +26,9 @@ particle_type::particle_type(const prior_function_type& _prior_function,
 			     const tau_type& _tau,
 			     const real_type& _p0,
 			     const real_type& _p,
-			     const real_type& _s) 
+			     const real_type& _s,
+			     const real_type& _lst_nu,
+			     const real_type& _lst_mu) 
 {
   prior_function = _prior_function;
   feature_vector_function = _feature_vector_function;
@@ -32,6 +36,8 @@ particle_type::particle_type(const prior_function_type& _prior_function,
   p0 = _p0;
   p = _p;
   s = _s;
+  lst_nu = _lst_nu;
+  lst_mu = _lst_mu;
   weight = 1.0;
   ratios.push_front(1.0);
 }

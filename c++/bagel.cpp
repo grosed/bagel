@@ -6,11 +6,13 @@ bagel_type::bagel_type(const prior_function_type& prior_function,
 		       const probability_type& p0,
 		       const probability_type& p,
 		       const real_type& s,
+		       const real_type& lst_nu,
+		       const real_type& lst_mu,
 		       const int& n)
 {
   t = 1;
   max_num_particles = n;
-  initial_particle = particle_type(prior_function,feature_vector_function,0,p0,p,s);
+  initial_particle = particle_type(prior_function,feature_vector_function,0,p0,p,s,lst_nu,lst_mu);
 }
 
 

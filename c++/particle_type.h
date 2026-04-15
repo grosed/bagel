@@ -20,6 +20,8 @@ struct particle_type
   real_type p0;
   real_type p;
   real_type s;
+  real_type lst_nu;
+  real_type lst_mu;
   post_type post;
   real_type weight;
   std::list<ratio_type> ratios;
@@ -27,6 +29,8 @@ struct particle_type
   particle_type(const prior_function_type&,
 		const feature_vector_function_type&,
 		const tau_type&,
+		const real_type&,
+		const real_type&,
 		const real_type&,
 		const real_type&,
 		const real_type&);
