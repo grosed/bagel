@@ -1,7 +1,7 @@
 Package: bagelR
 Type: Package
 Title: Fast Univariate Online Changepoint Detection
-Version: 1.1.0
+Version: 1.2.0
 Date: 2026-04-15
 Author: Daniel Grose
 Maintainer: Daniel Grose <dan.grose@lancaster.ac.uk>
