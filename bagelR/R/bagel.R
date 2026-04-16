@@ -25,7 +25,13 @@ setClass("bagel_type", slots=list(H = "function",
 # constructor
 bagel_online <- function(H,prior,p0,p,s,n)
 {
-return(new("bagel_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,bagel_object=new(bagelR,p0,p,s,n)))	
+   known_variance <- TRUE
+   if(is.na(s))
+   {
+      known_variance <- FALSE
+      s = 1.0;
+   }
+   return(new("bagel_type",H=H,prior=prior,p0=p0,p=p,s=s,n=n,bagel_object=new(bagelR,p0,p,s,known_variance,n)))	
 }
 
 
@@ -86,13 +92,16 @@ setMethod("time","bagel_type",
 ### off line interface
 
 
+### 
+setClassUnion("numerical_or_NA",c("numeric","logical")) # note - type of NA is logical :-o !!
+
 # type
 setClass("bagel_results_type", slots=list(bagel_object = "bagel_type",
                                           feature_vector_function = "function",
       		       			  prior_function = "function",
 				  	  p0 = "numeric",
 				  	  p = "numeric",
-				  	  noise_sd = "numeric",
+				  	  noise_sd = "numerical_or_NA",
 				  	  max_particles = "numeric",
 				          threshold = "numeric",
 					  w0t = "vector",
@@ -122,14 +131,17 @@ return(new("bagel_results_type",bagel_object=bagel_object,
 				y=y))	
 }
 
+
+
+
 bagel_offline <- function(feature_vector_function,
 	 		  prior_function,
 			  p0,
 			  p,
-			  noise_sd,
 			  max_particles,
 			  threshold,
-			  y)
+			  y,
+			  noise_sd = NA)
 {
    bagel_object <- bagel_online(feature_vector_function,
                                 prior_function,
@@ -141,10 +153,9 @@ bagel_offline <- function(feature_vector_function,
    for(yt in y)
    {
 	w0 <- update(bagel_object,yt)
-   	w0t <- c(w0t,w0) # log the result
+   	w0t <- c(w0t,w0) # record the result
 	if(1.0 - w0 > threshold) { break }
    }
-   
    return(bagel_results(bagel_object,feature_vector,prior_function,p0,p,noise_sd,max_particles,threshold,w0t,y))
 }
 

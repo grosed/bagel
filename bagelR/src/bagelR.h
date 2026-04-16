@@ -18,7 +18,7 @@ struct bagelR
   const matrix& feature_vector_from_R(const int&,const int&);
   const prior_type prior_from_R(const int&);
    
-  bagelR(const probability_type&,const probability_type&,const real_type&,const int&);
+  bagelR(const probability_type&,const probability_type&,const real_type&,const bool&,const int&);
   real_type update(const real_type&);
   std::list<int> get_taus();
   std::list<double> get_weights();

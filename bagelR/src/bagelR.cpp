@@ -17,11 +17,14 @@ using namespace Rcpp;
 bagelR::bagelR(const probability_type& p0,
 	       const probability_type& p,
 	       const real_type& s,
+	       const bool& known_variance,
 	       const int& n)
 {
   feature_vector_function_type G_feature_vector =   std::bind(&bagelR::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
   prior_function_type G_prior =   std::bind(&bagelR::prior_from_R, this, std::placeholders::_1);
-  sp_bagel = std::make_shared<bagel_type>(G_prior,G_feature_vector,p0,p,s,n);
+  double lst_nu = 1.0;
+  double lst_mu = 0.0;
+  sp_bagel = std::make_shared<bagel_type>(G_prior,G_feature_vector,p0,p,s,lst_nu,lst_mu,known_variance,n);
 }
 
 
@@ -114,7 +117,7 @@ std::list<std::list<double> > bagelR::get_ratios()
 RCPP_MODULE(bagelR) 
 {
   class_<bagelR >("bagelR")
-    .constructor<probability_type,probability_type,real_type,int>()
+    .constructor<probability_type,probability_type,real_type,bool,int>()
   .method("get_time", &bagelR::get_time)
   .method("get_taus", &bagelR::get_taus)
   .method("get_weights", &bagelR::get_weights)
