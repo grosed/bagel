@@ -30,7 +30,7 @@ install_github("grosed/bagel/bagelR",force=TRUE)
     
 
 
-    * checking for file ‘/tmp/RtmpAXU8UQ/remotes7eed06a94c8fa/grosed-bagel-8d88d25/bagelR/DESCRIPTION’ ... OK
+    * checking for file ‘/tmp/RtmpAWlt4x/remotes145e511bdb2c82/grosed-bagel-62aaf57/bagelR/DESCRIPTION’ ... OK
     * preparing ‘bagelR’:
     * checking DESCRIPTION meta-information ... OK
     * cleaning src
@@ -39,7 +39,7 @@ install_github("grosed/bagel/bagelR",force=TRUE)
     * cleaning src
     * checking for LF line-endings in source and make files and shell scripts
     * checking for empty or unneeded directories
-    * building ‘bagelR_1.2.0.tar.gz’
+    * building ‘bagelR_1.3.0.tar.gz’
 
 
     Installing package into ‘/home/grosed/DASS/R-packages’
@@ -55,7 +55,7 @@ packageVersion("bagelR")
 ```
 
 
-    [1] ‘1.2.0’
+    [1] ‘1.3.0’
 
 
 ## Using bagelR - 1 : Detecting Change in Mean
