@@ -46,7 +46,7 @@ setMethod("update","bagel_type",
   	    t <- bagel_object$get_time()
   	    taus <- c(taus,t-1)
   	    bagel_object$set_feature_vectors(taus,Map(function(tau) return(H(t,tau)),taus))
-  	    ts <- c(taus[-1],t)				  
+  	    ts <- c(1,taus[-1],t)				  
   	    priors <- Map(prior,ts)
   	    prior_mus <- Map(function(x) return(x$mu), priors)
   	    prior_sigmas <- Map(function(x) x$sigma, priors)		
@@ -156,7 +156,7 @@ bagel_offline <- function(feature_vector_function,
    	w0t <- c(w0t,w0) # record the result
 	if(1.0 - w0 > threshold) { break }
    }
-   return(bagel_results(bagel_object,feature_vector,prior_function,p0,p,noise_sd,max_particles,threshold,w0t,y))
+   return(bagel_results(bagel_object,feature_vector_function,prior_function,p0,p,noise_sd,max_particles,threshold,w0t,y))
 }
 
 
