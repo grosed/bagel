@@ -1,8 +1,8 @@
 
 CXX = g++
-CXXFLAGS = -O3  -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_NO_STATIC_ASSERT -I./
+CXXFLAGS = -std=c++20  -O3  -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_NO_STATIC_ASSERT -I./
 
-TARGET = bagel-online
+TARGET = surgery
 
 SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:.cpp=.o)
