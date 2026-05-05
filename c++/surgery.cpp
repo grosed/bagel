@@ -46,11 +46,15 @@ int main(int argc, char* argv[])
   bagel_type<known_variance,plurality_type::univariate> bagel(prior_function,feature_vector_function,kv,p0,p,s,lst_nu,lst_mu,false,n);
   */
 
+
+  known_variance kv;
+  kv.sigma = 1.0;
+  
   unknown_variance uv;
   uv.nu = 1.0;
   uv.iota = 0.0;
   
-  bagel_type<unknown_variance,plurality_type::univariate> bagel(prior_function,feature_vector_function,uv,p0,p,s,lst_nu,lst_mu,false,n);
+  bagel_type<known_variance,plurality_type::univariate> bagel(prior_function,feature_vector_function,kv,p0,p,s,lst_nu,lst_mu,false,n);
   
   std::string input_line;
   try
