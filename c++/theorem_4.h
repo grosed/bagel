@@ -18,7 +18,7 @@ real_type predict_mu(const particle_type<noise,plurality>& particle_t,const time
   // use temporary objects for now - optimise later
   matrix sigma_post = particle_t.post.sigma;
   matrix mu_post = particle_t.post.mu;
-  matrix H_t_tau  = particle_t.feature_vector_function(t,particle_t.tau);
+  matrix H_t_tau  = particle_t.model.feature_vector_function(t,particle_t.tau);
 
   // moving from matrices to scalars like this seems like code stink
   matrix temp = H_t_tau.transpose() * sigma_post * H_t_tau;
@@ -34,7 +34,7 @@ real_type predict_noise(const particle_type<noise_type,plurality>& particle_t,co
   // use temporary objects for now - optimise later
   matrix sigma_post = particle_t.post.sigma;
   matrix mu_post = particle_t.post.mu;
-  matrix H_t_tau  = particle_t.feature_vector_function(t,particle_t.tau);
+  matrix H_t_tau  = particle_t.model.feature_vector_function(t,particle_t.tau);
   // moving from matrices to scalars like this seems like code stink
   matrix temp = H_t_tau.transpose() * sigma_post * H_t_tau;
   real_type mu_pred = predict_mu(particle_t,t);
@@ -52,7 +52,7 @@ real_type predict_noise(const particle_type<noise_type,plurality>& particle_t,co
   // use temporary objects for now - optimise later
   matrix sigma_post = particle_t.post.sigma;
   matrix mu_post = particle_t.post.mu;
-  matrix H_t_tau  = particle_t.feature_vector_function(t,particle_t.tau);
+  matrix H_t_tau  = particle_t.model.feature_vector_function(t,particle_t.tau);
   real_type sigma = particle_t.noise_structure.sigma;   
   // moving from matrices to scalars like this seems like code stink
   matrix temp = H_t_tau.transpose() * sigma_post * H_t_tau;

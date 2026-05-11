@@ -12,20 +12,53 @@
 
 #include <iostream>
 
+template <typename T>
+std::tuple<matrix,matrix> transform(const T& a)
+{
+  matrix mu = a.post.mu;
+  matrix sigma = a.post.sigma;
+  time_type tau = a.tau;
+  matrix A = a.model.transformer_function(tau);
+  mu = A*mu;
+  sigma = sigma * A * sigma.transpose();
+  return std::make_tuple(mu,sigma);
+}
 
 template <typename T>
 double total_variation(const T& a,const T& b)
-requires requires { requires std::same_as<T,particle_type<unknown_variance,plurality_type::univariate> >; }
+requires requires { requires std::same_as<T,particle_type<known_variance,plurality_type::multivariate> >; }
 {
-  matrix mu_i = a.post.mu;
-  matrix mu_i_plus_1 = b.post.mu;
-  matrix sigma_i = a.post.sigma;
-  matrix sigma_i_plus_1 = b.post.sigma;
+  std::tuple<matrix,matrix> transformed = transform(a);
+  matrix mu_i = std::get<0>(transformed);
+  matrix sigma_i = std::get<1>(transformed);
+  transformed = transform(b);
+  matrix mu_i_plus_1 = std::get<0>(transformed);
+  matrix sigma_i_plus_1 = std::get<1>(transformed);
+  double sigma = a.noise_structure.sigma;
+  matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
+  double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
+  result = result + (1/sigma*sigma) * ((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
+  result = result + std::log((sigma_i.inverse() * sigma_i_plus_1).determinant());
+  result = 0.5*result;
+  return a.weight*result;
+}
+
+
+template <typename T>
+double total_variation(const T& a,const T& b)
+requires requires { requires std::same_as<T,particle_type<unknown_variance,plurality_type::multivariate> >; }
+{ 
+  std::tuple<matrix,matrix> transformed = transform(a);
+  matrix mu_i = std::get<0>(transformed);
+  matrix sigma_i = std::get<1>(transformed);
+  transformed = transform(b);
+  matrix mu_i_plus_1 = std::get<0>(transformed);
+  matrix sigma_i_plus_1 = std::get<1>(transformed);
   
   double nu_i = a.noise_structure.nu;
   double nu_i_plus_1 = b.noise_structure.nu;
   double iota_i = a.noise_structure.iota;
-  double iota_i_plus_1 = b.noise_structure.iota; 
+  double iota_i_plus_1 = b.noise_structure.iota;
   matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
   double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
 
@@ -35,11 +68,7 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,plura
   result = result - std::log(boost::math::tgamma(nu_i)/boost::math::tgamma(nu_i_plus_1));
   result = result + (nu_i - nu_i_plus_1)*boost::math::digamma(nu_i);
   result = result - (iota_i - iota_i_plus_1)*(nu_i/iota_i);
-
-
-
-  std::cout << std::abs(result) << std::endl;  
-  return std::abs(result);
+  return a.weight*result;
 }
 
 
@@ -55,14 +84,20 @@ requires requires { requires std::same_as<T,particle_type<known_variance,plurali
   double sigma = a.noise_structure.sigma; 
   matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
   double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
-  std::cout << sigma_i_plus_1.inverse() << std::endl;
-
-  
+  // std::cout << sigma_i_plus_1.inverse() << std::endl;
+  std::cout << "--------------------------------" << std::endl;
+  std::cout << sigma_i << std::endl;
+  std::cout << "****************************" << std::endl;
+  std::cout << sigma_i_plus_1 << std::endl;
+  std::cout << "++++++++++++++++++++++++++" << std::endl;
+  std::cout << result << std::endl;
   result = result + (1/sigma*sigma) * ((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
-  result = result + std::log((sigma_i_plus_1.inverse() * sigma_i).determinant());
+  std::cout << result << std::endl;
+  result = result + std::log((sigma_i.inverse() * sigma_i_plus_1).determinant());
+  std::cout << result << std::endl;
   result = 0.5*result;
 
-  std::cout << std::abs(result) << std::endl;
+  std::cout << result << std::endl;
   return std::abs(result);
   return a.weight;
   
@@ -109,7 +144,6 @@ std::list<particle_type<noise,plurality> >& prune(std::list<particle_type<noise,
       it_relocation -> weight += it_evicted -> weight;
       // evict the pruned particle
       particles.erase(it_evicted);
-      std::cout << particles.size() << std::endl;
     }  
   return particles;
   

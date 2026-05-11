@@ -13,7 +13,5 @@ struct prior_type
   prior_type& operator=(const prior_type&);
 };
 
-typedef std::function<prior_type (const int&)> prior_function_type ;
-
 
 #endif

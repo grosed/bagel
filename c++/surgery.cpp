@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-#include "example_2.h"
+#include "examples.h"
 
 #include "particle_type.h"
 #include "bagel.h"
@@ -10,6 +10,7 @@
 #include "noise_type.h"
 #include "plurality_type.h"
 
+#include "model_type.h"
 
 
 
@@ -53,18 +54,47 @@ int main(int argc, char* argv[])
   unknown_variance uv;
   uv.nu = 1.0;
   uv.iota = 0.0;
+
+  model_type model;
   
-  bagel_type<known_variance,plurality_type::univariate> bagel(prior_function,feature_vector_function,kv,p0,p,s,lst_nu,lst_mu,false,n);
+  model.transformer_function =  transformation_example_2;
+  model.prior_function =  prior_example_2;
+  model.feature_vector_function =  feature_vector_example_2;
+  
+  /*
+  model.transformer_function =  transformation_example_1;
+  model.prior_function =  prior_example_1;
+  model.feature_vector_function =  feature_vector_example_1;
+  */
+  
+  bagel_type<unknown_variance,plurality_type::multivariate> bagel(// prior_function,
+								//feature_vector_function,
+								uv, //kv,
+								p0,p,s,lst_nu,lst_mu,false,n,model);
   
   std::string input_line;
   try
     {
+      int i = 0;
       while(std::cin)
       {
 	// get the next value from the data stream
         getline(std::cin, input_line);
 	double y = std::stod(input_line);
 	bagel = update(bagel,y);
+	/*
+	i++;
+	if(i == 100)
+	  {
+	    int j = 0;
+	    for(auto& p : bagel.particles)
+	      {
+		std::cout << j << "------------------------" << std::endl;
+		std::cout << p.post.sigma << std::endl;
+		j++;
+	      }
+	  }
+	*/
 	std::cout << weight_0_t(bagel) << std::endl;
 	if(1.0 - weight_0_t(bagel) > t)
 	  {

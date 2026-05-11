@@ -14,15 +14,15 @@ particle_type<noise,plurality> theorem_2(const particle_type<noise,plurality>& p
 
   if(t == 1)
     {
-      particle_t.post = particle_0.prior_function(t);
+      particle_t.post = particle_0.model.prior_function(t);
       particle_t.tau= t - 1;
       return particle_t;
     }
 
   // Make everyhting very explicit for now - can take some shortcuts (i.e. no temporary objects) once it is tested.
   
-  prior_type prior_1 = particle_0.prior_function(1);
-  prior_type prior_t = particle_0.prior_function(t);
+  prior_type prior_1 = particle_0.model.prior_function(1);
+  prior_type prior_t = particle_0.model.prior_function(t);
   
   int d1 = prior_1.mu.rows();
   int d2 = prior_1.sigma.rows();

@@ -19,6 +19,9 @@
 #include <list>
 #include "prune.h"
 
+#include "model_type.h"
+
+
 
 template<typename noise, plurality_type plurality>
 struct bagel_type
@@ -34,8 +37,8 @@ struct bagel_type
   std::list<particle_type<noise,plurality> > particles;
 
 
-  bagel_type(const prior_function_type& prior_function,
-	     const feature_vector_function_type& feature_vector_function,
+  bagel_type(// const prior_function_type& prior_function,
+	     // const feature_vector_function_type& feature_vector_function,
 	     const noise& noise_structure,
 	     const probability_type& p0,
 	     const probability_type& p,
@@ -43,11 +46,15 @@ struct bagel_type
 	     const real_type& lst_nu,
 	     const real_type& lst_mu,
 	     const bool& known_variance,
-	     const int& n)
+	     const int& n,
+	     const model_type& model)
   {
     t = 1;
     max_num_particles = n;
-    initial_particle = particle_type<noise,plurality>(prior_function,feature_vector_function,noise_structure,0,p0,p,s,lst_nu,lst_mu,known_variance);
+    initial_particle = particle_type<noise,plurality>(// prior_function,
+						      // feature_vector_function,
+						      noise_structure,
+						      0,p0,p,s,lst_nu,lst_mu,known_variance,model);
   }
 
 
