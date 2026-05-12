@@ -67,10 +67,8 @@ int main(int argc, char* argv[])
   model.feature_vector_function =  feature_vector_example_1;
   */
   
-  bagel_type<unknown_variance,KL_divergence_type::approximate> bagel(// prior_function,
-								//feature_vector_function,
-								uv, //kv,
-								p0,p,s,lst_nu,lst_mu,false,n,model);
+  bagel_type<unknown_variance,KL_divergence_type::approximate> bagel(uv, //kv,
+								     p0,p,s,lst_nu,lst_mu,false,n,model);
   
   std::string input_line;
   try

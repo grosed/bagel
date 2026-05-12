@@ -69,8 +69,6 @@ struct particle_type
 		  const model_type& _model) 
   {
     model = _model;
-    //prior_function = _prior_function;
-    // feature_vector_function = _feature_vector_function;
     noise_structure = _noise_structure;
     tau = _tau;
     p0 = _p0;
