@@ -8,11 +8,11 @@
 #include "real_type.h"
 #include "dnorm.h"
 #include "dlst.h"
-#include "plurality_type.h"
+#include "KL_divergence_type.h"
 
 
-template<typename noise, plurality_type plurality>
-real_type predict_mu(const particle_type<noise,plurality>& particle_t,const time_type& t)
+template<typename noise, KL_divergence_type KL_divergence>
+real_type predict_mu(const particle_type<noise,KL_divergence>& particle_t,const time_type& t)
 {
 
   // use temporary objects for now - optimise later
@@ -27,9 +27,9 @@ real_type predict_mu(const particle_type<noise,plurality>& particle_t,const time
 }
 
 
-template <typename noise_type, plurality_type plurality>
+template <typename noise_type, KL_divergence_type KL_divergence>
 requires requires { requires std::same_as<noise_type,unknown_variance>; }
-real_type predict_noise(const particle_type<noise_type,plurality>& particle_t,const time_type& t, const real_type& y)
+real_type predict_noise(const particle_type<noise_type,KL_divergence>& particle_t,const time_type& t, const real_type& y)
 {
   // use temporary objects for now - optimise later
   matrix sigma_post = particle_t.post.sigma;
@@ -45,9 +45,9 @@ real_type predict_noise(const particle_type<noise_type,plurality>& particle_t,co
   return dlst(y,2*lst_nu,mu_pred,var_pred);
 }
 
-template <typename  noise_type, plurality_type plurality>
+template <typename  noise_type, KL_divergence_type KL_divergence>
 requires requires { requires std::same_as<noise_type,known_variance>; }
-real_type predict_noise(const particle_type<noise_type,plurality>& particle_t,const time_type& t, const real_type& y)
+real_type predict_noise(const particle_type<noise_type,KL_divergence>& particle_t,const time_type& t, const real_type& y)
 {
   // use temporary objects for now - optimise later
   matrix sigma_post = particle_t.post.sigma;
@@ -62,8 +62,8 @@ real_type predict_noise(const particle_type<noise_type,plurality>& particle_t,co
 }
 
 
-template<typename noise, plurality_type plurality>
-particle_type<noise,plurality>& theorem_4(particle_type<noise,plurality>& particle_t, const time_type& t, const real_type& y)
+template<typename noise, KL_divergence_type KL_divergence>
+particle_type<noise,KL_divergence>& theorem_4(particle_type<noise,KL_divergence>& particle_t, const time_type& t, const real_type& y)
 {
   particle_t.weight = particle_t.weight * predict_noise(particle_t,t,y); 
   return(particle_t);

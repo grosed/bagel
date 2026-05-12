@@ -9,14 +9,14 @@
 #include "tau_type.h"
 #include "ratio_type.h"
 #include "noise_type.h"
-#include "plurality_type.h"
+#include "KL_divergence_type.h"
 #include <list>
 
 #include "model_type.h"
 
 
 
-template<typename noise, plurality_type plurality>
+template<typename noise, KL_divergence_type KL_divergence>
 struct particle_type
 {
   model_type model;

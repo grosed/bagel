@@ -6,11 +6,11 @@
 #include "time_type.h"
 
 // creates new particles - non mutating
-template<typename noise, plurality_type plurality>
-particle_type<noise,plurality> theorem_2(const particle_type<noise,plurality>& particle_0, const time_type& t)
+template<typename noise, KL_divergence_type KL_divergence>
+particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_divergence>& particle_0, const time_type& t)
 {
 
-  particle_type<noise,plurality> particle_t = particle_0;
+  particle_type<noise,KL_divergence> particle_t = particle_0;
 
   if(t == 1)
     {

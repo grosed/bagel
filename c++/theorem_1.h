@@ -8,8 +8,8 @@
 #include "real_type.h"
 
 
-template<typename noise, plurality_type plurality>
-particle_type<noise,plurality>& theorem_1(particle_type<noise,plurality>& particle_1,particle_type<noise,plurality>& particle_t, const time_type& t)
+template<typename noise, KL_divergence_type KL_divergence>
+particle_type<noise,KL_divergence>& theorem_1(particle_type<noise,KL_divergence>& particle_1,particle_type<noise,KL_divergence>& particle_t, const time_type& t)
 {
   real_type weight;
   if(particle_t.tau == 0)

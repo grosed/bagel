@@ -8,7 +8,7 @@
 #include "bagel.h"
 #include "process_args.h"
 #include "noise_type.h"
-#include "plurality_type.h"
+#include "KL_divergence_type.h"
 
 #include "model_type.h"
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
   /*
   known_variance kv;
   kv.sigma = s;
-  bagel_type<known_variance,plurality_type::univariate> bagel(prior_function,feature_vector_function,kv,p0,p,s,lst_nu,lst_mu,false,n);
+  bagel_type<known_variance,KL_divergence_type::exact> bagel(prior_function,feature_vector_function,kv,p0,p,s,lst_nu,lst_mu,false,n);
   */
 
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
   model.feature_vector_function =  feature_vector_example_1;
   */
   
-  bagel_type<unknown_variance,plurality_type::multivariate> bagel(// prior_function,
+  bagel_type<unknown_variance,KL_divergence_type::approximate> bagel(// prior_function,
 								//feature_vector_function,
 								uv, //kv,
 								p0,p,s,lst_nu,lst_mu,false,n,model);

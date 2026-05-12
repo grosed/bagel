@@ -8,17 +8,17 @@
 #include "real_type.h"
 
 
-template <typename noise_type, plurality_type plurality>
+template <typename noise_type, KL_divergence_type KL_divergence>
 requires requires { requires std::same_as<noise_type,known_variance>; }
-particle_type<noise_type,plurality>& theorem_3_noise(particle_type<noise_type,plurality>& particle_t, const matrix& e, const matrix& Q)
+particle_type<noise_type,KL_divergence>& theorem_3_noise(particle_type<noise_type,KL_divergence>& particle_t, const matrix& e, const matrix& Q)
 {
   return particle_t;
 }
 
 
-template <typename noise_type, plurality_type plurality>
+template <typename noise_type, KL_divergence_type KL_divergence>
 requires requires { requires std::same_as<noise_type,unknown_variance>; }
-particle_type<noise_type,plurality>& theorem_3_noise(particle_type<noise_type,plurality>& particle_t, const matrix& e, const matrix& Q)
+particle_type<noise_type,KL_divergence>& theorem_3_noise(particle_type<noise_type,KL_divergence>& particle_t, const matrix& e, const matrix& Q)
 {
   particle_t.noise_structure.nu = particle_t.noise_structure.nu + 0.5;
   particle_t.noise_structure.iota = particle_t.noise_structure.iota + 0.5*e(0,0)*e(0,0)/Q(0,0);
@@ -28,8 +28,8 @@ particle_type<noise_type,plurality>& theorem_3_noise(particle_type<noise_type,pl
 
 
 // modifies exiting particles - mutating
-template<typename noise, plurality_type plurality>
-particle_type<noise,plurality>& theorem_3(particle_type<noise,plurality>& particle_t, const time_type& t, const real_type& val)
+template<typename noise, KL_divergence_type KL_divergence>
+particle_type<noise,KL_divergence>& theorem_3(particle_type<noise,KL_divergence>& particle_t, const time_type& t, const real_type& val)
 {
   matrix y(1,1);
   y(0,0) = val;

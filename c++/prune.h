@@ -4,7 +4,7 @@
 
 
 #include "particle_type.h"
-#include "plurality_type.h"
+#include "KL_divergence_type.h"
 #include <list>
 #include <boost/math/special_functions/digamma.hpp>
 #include <boost/math/special_functions/gamma.hpp>
@@ -26,7 +26,7 @@ std::tuple<matrix,matrix> transform(const T& a)
 
 template <typename T>
 double total_variation(const T& a,const T& b)
-requires requires { requires std::same_as<T,particle_type<known_variance,plurality_type::multivariate> >; }
+requires requires { requires std::same_as<T,particle_type<known_variance,KL_divergence_type::approximate> >; }
 {
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
@@ -46,7 +46,7 @@ requires requires { requires std::same_as<T,particle_type<known_variance,plurali
 
 template <typename T>
 double total_variation(const T& a,const T& b)
-requires requires { requires std::same_as<T,particle_type<unknown_variance,plurality_type::multivariate> >; }
+requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_divergence_type::approximate> >; }
 { 
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
@@ -74,7 +74,7 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,plura
 
 template <typename T>
 double total_variation(const T& a,const T& b)
-requires requires { requires std::same_as<T,particle_type<known_variance,plurality_type::univariate> >; }
+requires requires { requires std::same_as<T,particle_type<known_variance,KL_divergence_type::exact> >; }
 {
 
   matrix mu_i = a.post.mu;
@@ -105,8 +105,8 @@ requires requires { requires std::same_as<T,particle_type<known_variance,plurali
 }
 
 
-template<typename noise, plurality_type plurality>
-std::list<particle_type<noise,plurality> >& prune(std::list<particle_type<noise,plurality> >& particles,const int& max_num_particles)
+template<typename noise, KL_divergence_type KL_divergence>
+std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<noise,KL_divergence> >& particles,const int& max_num_particles)
 {
   // return particles;
   if(particles.size() > max_num_particles && particles.size() > 3)
@@ -154,8 +154,8 @@ std::list<particle_type<noise,plurality> >& prune(std::list<particle_type<noise,
 
 /*
 
-template<typename noise, plurality_type plurality>
-std::list<particle_type<noise,plurality> >& prune(std::list<particle_type<noise,plurality> >& particles,const int& max_num_particles)
+template<typename noise, KL_divergence_type KL_divergence>
+std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<noise,KL_divergence> >& particles,const int& max_num_particles)
 {
 
   if(particles.size() > max_num_particles && particles.size() > 3)

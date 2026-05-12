@@ -9,7 +9,7 @@
 #include "time_type.h"
 #include "matrix_type.h"
 #include "particle_type.h"
-#include "plurality_type.h"
+#include "KL_divergence_type.h"
 #include "particle_type.h"
 #include "theorem_2.h"
 #include "theorem_3.h"
@@ -23,7 +23,7 @@
 
 
 
-template<typename noise, plurality_type plurality>
+template<typename noise, KL_divergence_type KL_divergence>
 struct bagel_type
 {
 
@@ -33,8 +33,8 @@ struct bagel_type
   real_type s;
   int max_num_particles; 
   
-  particle_type<noise,plurality> initial_particle;
-  std::list<particle_type<noise,plurality> > particles;
+  particle_type<noise,KL_divergence> initial_particle;
+  std::list<particle_type<noise,KL_divergence> > particles;
 
 
   bagel_type(// const prior_function_type& prior_function,
@@ -51,7 +51,7 @@ struct bagel_type
   {
     t = 1;
     max_num_particles = n;
-    initial_particle = particle_type<noise,plurality>(// prior_function,
+    initial_particle = particle_type<noise,KL_divergence>(// prior_function,
 						      // feature_vector_function,
 						      noise_structure,
 						      0,p0,p,s,lst_nu,lst_mu,known_variance,model);
@@ -152,20 +152,20 @@ struct bagel_type
   }
 };
 
-template<typename noise, plurality_type plurality>
-bagel_type<noise,plurality>& update(bagel_type<noise,plurality>& bagel, const real_type& y)
+template<typename noise, KL_divergence_type KL_divergence>
+bagel_type<noise,KL_divergence>& update(bagel_type<noise,KL_divergence>& bagel, const real_type& y)
 {
   return bagel.update(y);
 }
 
-template<typename noise, plurality_type plurality>
-real_type weight_0_t(const bagel_type<noise,plurality>& bagel)
+template<typename noise, KL_divergence_type KL_divergence>
+real_type weight_0_t(const bagel_type<noise,KL_divergence>& bagel)
 {
   return bagel.weight_0_t();
 }
 
-template<typename noise, plurality_type plurality>
-std::list<std::list<ratio_type> > ratios(const bagel_type<noise,plurality>& bagel)
+template<typename noise, KL_divergence_type KL_divergence>
+std::list<std::list<ratio_type> > ratios(const bagel_type<noise,KL_divergence>& bagel)
 {
   return bagel.ratios();
 }
