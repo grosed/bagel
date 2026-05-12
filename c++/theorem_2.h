@@ -5,6 +5,7 @@
 #include "particle_type.h"
 #include "time_type.h"
 
+
 // creates new particles - non mutating
 template<typename noise, KL_divergence_type KL_divergence>
 particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_divergence>& particle_0, const time_type& t)
@@ -61,12 +62,9 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
   particle_t.post.mu.block(0,0,d1,1) = top;
   particle_t.post.mu.block(d1,0,d2,1) = bottom;
 
-
-  
   particle_t.tau= t - 1;
+  particle_t.noise_structure = particle_0.noise_structure;
 
-  particle_t.lst_nu = particle_0.lst_nu;
-  particle_t.lst_iota = particle_0.lst_iota;
 
   return particle_t;
   

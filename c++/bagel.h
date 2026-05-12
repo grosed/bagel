@@ -37,24 +37,15 @@ struct bagel_type
   std::list<particle_type<noise,KL_divergence> > particles;
 
 
-  bagel_type(// const prior_function_type& prior_function,
-	     // const feature_vector_function_type& feature_vector_function,
+  bagel_type(const model_type& model,
 	     const noise& noise_structure,
 	     const probability_type& p0,
 	     const probability_type& p,
-	     const real_type& s,
-	     const real_type& lst_nu,
-	     const real_type& lst_mu,
-	     const bool& known_variance,
-	     const int& n,
-	     const model_type& model)
+	     const int& n)
   {
     t = 1;
     max_num_particles = n;
-    initial_particle = particle_type<noise,KL_divergence>(// prior_function,
-						      // feature_vector_function,
-						      noise_structure,
-						      0,p0,p,s,lst_nu,lst_mu,known_variance,model);
+    initial_particle = particle_type<noise,KL_divergence>(model,noise_structure,0,p0,p);
   }
 
 

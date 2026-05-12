@@ -56,19 +56,21 @@ int main(int argc, char* argv[])
   uv.iota = 0.0;
 
   model_type model;
-  
+
+  /*
   model.transformer_function =  transformation_example_2;
   model.prior_function =  prior_example_2;
   model.feature_vector_function =  feature_vector_example_2;
+  */
   
-  /*
   model.transformer_function =  transformation_example_1;
   model.prior_function =  prior_example_1;
   model.feature_vector_function =  feature_vector_example_1;
-  */
   
-  bagel_type<unknown_variance,KL_divergence_type::approximate> bagel(uv, //kv,
-								     p0,p,s,lst_nu,lst_mu,false,n,model);
+  
+  bagel_type<unknown_variance,KL_divergence_type::approximate> bagel(model,
+								     uv, //kv,
+								     p0,p,n);
   
   std::string input_line;
   try

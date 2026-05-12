@@ -13,7 +13,6 @@ typedef std::function<feature_vector_type (const int&,const int&)> feature_vecto
 typedef std::function<matrix (const time_type&)> transformation_function_type;
 typedef std::function<prior_type (const int&)> prior_function_type;
 
-
 struct model_type
 {
   prior_function_type prior_function;
