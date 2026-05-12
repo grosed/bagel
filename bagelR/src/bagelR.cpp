@@ -6,126 +6,201 @@ using namespace Rcpp;
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::depends(BH)]]
 
-
-#include "bagelR.h"
 #include <algorithm>
+#include <list>
+#include <vector>
+#include <map>
+#include <memory>
 
-// temporary testing using c++ version with example_2
-#include "example_2.h"
-
-
-bagelR::bagelR(const probability_type& p0,
-	       const probability_type& p,
-	       const real_type& s,
-	       const bool& known_variance,
-	       const int& n)
-{
-  feature_vector_function_type G_feature_vector =   std::bind(&bagelR::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
-  prior_function_type G_prior =   std::bind(&bagelR::prior_from_R, this, std::placeholders::_1);
-  double lst_nu = 1.0;
-  double lst_mu = 0.0;
-  sp_bagel = std::make_shared<bagel_type>(G_prior,G_feature_vector,p0,p,s,lst_nu,lst_mu,known_variance,n);
-}
+#include "bagel.h"
 
 
-real_type bagelR::update(const real_type& x)
-{
-  sp_bagel -> update(x);
-  return sp_bagel -> weight_0_t();
-}
 
+template<typename noise, KL_divergence_type KL_divergence>
+struct bagelR
+{   
+  std::shared_ptr<bagel_type<noise,KL_divergence> > sp_bagel; 
+  std::map<int,matrix> M;
+  std::map<int,prior_type> P;
+  noise noise_structure;
 
-std::list<double> bagelR::get_weights()
-{
-
-  std::list<double> lweights;
-  std::transform(sp_bagel->particles.begin(),
-		 sp_bagel->particles.end(),
-		 std::inserter(lweights,lweights.end()),
-		 [](auto& particle){return particle.weight;});  
-  return lweights;  
-}
+  bagelR(const probability_type& p0,
+	 const probability_type& p,
+	 const real_type& nu,
+	 const real_type& iota,
+	 const int& n)
+  {
+    noise_structure.nu = nu;
+    noise_structure.iota = iota;
+    
+    model_type model;
   
-double bagelR::get_time()
-{
-  return sp_bagel -> t;
-}
-
-
-std::list<int> bagelR::get_taus()
-{
-  std::list<int> ltaus;
-  std::transform(sp_bagel->particles.begin(),
-		 sp_bagel->particles.end(),
-		 std::inserter(ltaus,ltaus.end()),
-		 [](auto& particle){return particle.tau;});  
-  return ltaus;  
-}
-
-const matrix& bagelR::feature_vector_from_R(const int& t,const int& tau)
-{
-  return M[tau];
-}
-
-const prior_type bagelR::prior_from_R(const int& t)
-{
-  return P[t];
-}
-
-
-void bagelR::set_feature_vectors(const std::vector<int>& taus_from_R, const std::list<matrix>& feature_vectors_from_R)
-{ 
-  M.clear();
-  std::transform(taus_from_R.begin(),
-		 taus_from_R.end(),
-		 feature_vectors_from_R.begin(),
-		 std::inserter(M,M.end()),
-		 [](auto& tau,auto& m){return std::make_pair(tau,m);});
-}
-
-void bagelR::set_priors(const std::vector<int>& ts_from_R,
-			const std::list<matrix>& prior_mus_from_R,
-			const std::list<matrix>& prior_sigmas_from_R)
-{
-  P.clear();
+    model.prior_function =  std::bind(&bagelR<noise,KL_divergence>::prior_from_R, this, std::placeholders::_1);
+    model.feature_vector_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
+    // the transformer needs changing after methods have been added
+    // model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
   
-  // zip into prior_types
-  std::list<prior_type> priors;
-  std::transform(prior_mus_from_R.begin(),
-		 prior_mus_from_R.end(),
-		 prior_sigmas_from_R.begin(),
-		 std::inserter(priors,priors.end()),
-		 [](auto& mu,auto& sigma){prior_type prior;
-		                          prior.mu = mu;
-					  prior.sigma = sigma;
-					  return prior;});
-  std::transform(ts_from_R.begin(),
-		 ts_from_R.end(),
-		 priors.begin(),
-		 std::inserter(P,P.end()),
-		 [](auto& t,auto& prior){return std::make_pair(t,prior);});
-}
+    sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
+  }
+  
+  bagelR(const probability_type& p0,
+	 const probability_type& p,
+	 const real_type& sigma,
+	 const int& n)
+  {
+    
+    noise_structure.sigma = sigma;
+    
+    model_type model;
+  
+    model.prior_function =  std::bind(&bagelR<noise,KL_divergence>::prior_from_R, this, std::placeholders::_1);
+    model.feature_vector_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
+    // the transformer needs changing after methods have been added
+    // model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
+  
+    sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
+  }
+  
+ 
+  real_type update(const real_type& x)
+  {
+    sp_bagel -> update(x);
+    return sp_bagel -> weight_0_t();
+  }
+  
+  
+  std::list<double> get_weights()
+  {
+    
+    std::list<double> lweights;
+    std::transform(sp_bagel->particles.begin(),
+		   sp_bagel->particles.end(),
+		   std::inserter(lweights,lweights.end()),
+		   [](auto& particle){return particle.weight;});  
+    return lweights;  
+  }
+  
+  double get_time()
+  {
+    return sp_bagel -> t;
+  }
+  
+  
+  std::list<int> get_taus()
+  {
+    std::list<int> ltaus;
+    std::transform(sp_bagel->particles.begin(),
+		   sp_bagel->particles.end(),
+		   std::inserter(ltaus,ltaus.end()),
+		   [](auto& particle){return particle.tau;});  
+    return ltaus;  
+  }
+  
+  const matrix& feature_vector_from_R(const int& t,const int& tau)
+  {
+    return M[tau];
+  }
+  
+  const prior_type prior_from_R(const int& t)
+  {
+    return P[t];
+  }
+  
+  
+  void set_feature_vectors(const std::vector<int>& taus_from_R, const std::list<matrix>& feature_vectors_from_R)
+  { 
+    M.clear();
+    std::transform(taus_from_R.begin(),
+		   taus_from_R.end(),
+		   feature_vectors_from_R.begin(),
+		   std::inserter(M,M.end()),
+		   [](auto& tau,auto& m){return std::make_pair(tau,m);});
+  }
+  
+  void set_priors(const std::vector<int>& ts_from_R,
+		  const std::list<matrix>& prior_mus_from_R,
+		  const std::list<matrix>& prior_sigmas_from_R)
+  {
+    P.clear();
+    
+    // zip into prior_types
+    std::list<prior_type> priors;
+    std::transform(prior_mus_from_R.begin(),
+		   prior_mus_from_R.end(),
+		   prior_sigmas_from_R.begin(),
+		   std::inserter(priors,priors.end()),
+		   [](auto& mu,auto& sigma){prior_type prior;
+		     prior.mu = mu;
+		     prior.sigma = sigma;
+		     return prior;});
+    std::transform(ts_from_R.begin(),
+		   ts_from_R.end(),
+		   priors.begin(),
+		   std::inserter(P,P.end()),
+		   [](auto& t,auto& prior){return std::make_pair(t,prior);});
+  }
+  
+  
+  
+  std::list<std::list<double> > get_ratios()
+  {
+    return sp_bagel -> ratios();
+  }
+  
+  
+};
 
-
-
-std::list<std::list<double> > bagelR::get_ratios()
-{
-  return sp_bagel -> ratios();
-}
-
+typedef bagelR<unknown_variance,KL_divergence_type::exact> bagelR_uv_exact;
+typedef bagelR<known_variance,KL_divergence_type::exact> bagelR_kv_exact;
+typedef bagelR<unknown_variance,KL_divergence_type::approximate> bagelR_uv_approximate;
+typedef bagelR<known_variance,KL_divergence_type::approximate> bagelR_kv_approximate;
 
 RCPP_MODULE(bagelR) 
 {
-  class_<bagelR >("bagelR")
-    .constructor<probability_type,probability_type,real_type,bool,int>()
-  .method("get_time", &bagelR::get_time)
-  .method("get_taus", &bagelR::get_taus)
-  .method("get_weights", &bagelR::get_weights)
-  .method("set_feature_vectors", &bagelR::set_feature_vectors)
-  .method("set_priors", &bagelR::set_priors)
-  .method("update", &bagelR::update)
-  .method("get_ratios", &bagelR::get_ratios)
+  class_<bagelR_uv_exact>("bagelR_uv_exact")
+  .constructor<probability_type,probability_type,real_type,real_type,int>()
+  .method("get_time", &bagelR_uv_exact::get_time)
+  .method("get_taus", &bagelR_uv_exact::get_taus)
+  .method("get_weights", &bagelR_uv_exact::get_weights)
+  .method("set_feature_vectors", &bagelR_uv_exact::set_feature_vectors)
+  .method("set_priors", &bagelR_uv_exact::set_priors)
+  .method("update", &bagelR_uv_exact::update)
+  .method("get_ratios", &bagelR_uv_exact::get_ratios)
 ;
+  class_<bagelR_uv_approximate>("bagelR_uv_approximate")
+  .constructor<probability_type,probability_type,real_type,real_type,int>()
+  .method("get_time", &bagelR_uv_approximate::get_time)
+  .method("get_taus", &bagelR_uv_approximate::get_taus)
+  .method("get_weights", &bagelR_uv_approximate::get_weights)
+  .method("set_feature_vectors", &bagelR_uv_approximate::set_feature_vectors)
+  .method("set_priors", &bagelR_uv_approximate::set_priors)
+  .method("update", &bagelR_uv_approximate::update)
+  .method("get_ratios", &bagelR_uv_approximate::get_ratios)
+;
+
+
+
+  class_<bagelR_kv_exact>("bagelR_kv_exact")
+  .constructor<probability_type,probability_type,real_type,int>()
+  .method("get_time", &bagelR_kv_exact::get_time)
+  .method("get_taus", &bagelR_kv_exact::get_taus)
+  .method("get_weights", &bagelR_kv_exact::get_weights)
+  .method("set_feature_vectors", &bagelR_kv_exact::set_feature_vectors)
+  .method("set_priors", &bagelR_kv_exact::set_priors)
+  .method("update", &bagelR_kv_exact::update)
+  .method("get_ratios", &bagelR_kv_exact::get_ratios)
+;
+  class_<bagelR_kv_approximate>("bagelR_kv_approximate")
+  .constructor<probability_type,probability_type,real_type,int>()
+  .method("get_time", &bagelR_kv_approximate::get_time)
+  .method("get_taus", &bagelR_kv_approximate::get_taus)
+  .method("get_weights", &bagelR_kv_approximate::get_weights)
+  .method("set_feature_vectors", &bagelR_kv_approximate::set_feature_vectors)
+  .method("set_priors", &bagelR_kv_approximate::set_priors)
+  .method("update", &bagelR_kv_approximate::update)
+  .method("get_ratios", &bagelR_kv_approximate::get_ratios)
+;
+
 }
 
 
