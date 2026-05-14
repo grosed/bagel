@@ -22,6 +22,8 @@ struct bagelR
   std::shared_ptr<bagel_type<noise,KL_divergence> > sp_bagel; 
   std::map<int,matrix> M;
   std::map<int,prior_type> P;
+  std::map<int,matrix> A;
+  
   noise noise_structure;
 
   bagelR(const probability_type& p0,
@@ -38,7 +40,7 @@ struct bagelR
     model.prior_function =  std::bind(&bagelR<noise,KL_divergence>::prior_from_R, this, std::placeholders::_1);
     model.feature_vector_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
     // the transformer needs changing after methods have been added
-    // model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
+    model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::transformation_from_R, this, std::placeholders::_1);
   
     sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
   }
@@ -105,7 +107,22 @@ struct bagelR
   {
     return P[t];
   }
-  
+
+  const matrix transformation_from_R(const int& tau)
+  {
+    return A[tau];
+  }
+
+
+  void set_transformations(const std::vector<int>& taus_from_R, const std::list<matrix>& transformations_from_R)
+  {
+    A.clear();
+    std::transform(taus_from_R.begin(),
+		   taus_from_R.end(),
+		   transformations_from_R.begin(),
+		   std::inserter(A,A.end()),
+		   [](auto& tau,auto& a){return std::make_pair(tau,a);});
+  }
   
   void set_feature_vectors(const std::vector<int>& taus_from_R, const std::list<matrix>& feature_vectors_from_R)
   { 
@@ -164,6 +181,7 @@ RCPP_MODULE(bagelR)
   .method("get_weights", &bagelR_uv_exact::get_weights)
   .method("set_feature_vectors", &bagelR_uv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_uv_exact::set_priors)
+  .method("set_transformations", &bagelR_uv_exact::set_transformations)
   .method("update", &bagelR_uv_exact::update)
   .method("get_ratios", &bagelR_uv_exact::get_ratios)
 ;
@@ -174,6 +192,7 @@ RCPP_MODULE(bagelR)
   .method("get_weights", &bagelR_uv_approximate::get_weights)
   .method("set_feature_vectors", &bagelR_uv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_uv_approximate::set_priors)
+  .method("set_transformations", &bagelR_uv_approximate::set_transformations)
   .method("update", &bagelR_uv_approximate::update)
   .method("get_ratios", &bagelR_uv_approximate::get_ratios)
 ;
@@ -187,6 +206,7 @@ RCPP_MODULE(bagelR)
   .method("get_weights", &bagelR_kv_exact::get_weights)
   .method("set_feature_vectors", &bagelR_kv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_kv_exact::set_priors)
+  .method("set_transformations", &bagelR_kv_exact::set_transformations)
   .method("update", &bagelR_kv_exact::update)
   .method("get_ratios", &bagelR_kv_exact::get_ratios)
 ;
@@ -197,6 +217,7 @@ RCPP_MODULE(bagelR)
   .method("get_weights", &bagelR_kv_approximate::get_weights)
   .method("set_feature_vectors", &bagelR_kv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_kv_approximate::set_priors)
+  .method("set_transformations", &bagelR_kv_approximate::set_transformations)
   .method("update", &bagelR_kv_approximate::update)
   .method("get_ratios", &bagelR_kv_approximate::get_ratios)
 ;

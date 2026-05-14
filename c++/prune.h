@@ -20,7 +20,7 @@ std::tuple<matrix,matrix> transform(const T& a)
   time_type tau = a.tau;
   matrix A = a.model.transformer_function(tau);
   mu = A*mu;
-  sigma = sigma * A * sigma.transpose();
+  sigma = A * sigma * A.transpose();
   return std::make_tuple(mu,sigma);
 }
 
@@ -40,7 +40,7 @@ requires requires { requires std::same_as<T,particle_type<known_variance,KL_dive
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
   double sigma = a.noise_structure.sigma;
-  matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
+  matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());  
   double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
   result = result + (1/sigma*sigma) * ((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
   result = result + std::log((sigma_i.inverse() * sigma_i_plus_1).determinant());
@@ -53,6 +53,7 @@ template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<known_variance,KL_divergence_type::approximate> >; }
 {
+
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
   matrix sigma_i = std::get<1>(transformed);
@@ -73,7 +74,7 @@ requires requires { requires std::same_as<T,particle_type<known_variance,KL_dive
 template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_divergence_type::exact> >; }
-{ 
+{
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
   matrix sigma_i = std::get<1>(transformed);
@@ -102,7 +103,8 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
 template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_divergence_type::approximate> >; }
-{ 
+{
+    std::cout << "here 1" << std::endl;
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
   matrix sigma_i = std::get<1>(transformed);
@@ -117,12 +119,26 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
   matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
   double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
 
+
+  std::cout << "here 2" << std::endl;  
   result = result + (nu_i/iota_i)*((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
+  std::cout << "here 3" << std::endl;
+
+  
   result = result + std::log((sigma_i_plus_1.inverse() * sigma_i).determinant());
+    std::cout << "here 4" << std::endl;
   result = result + nu_i_plus_1 * std::log(iota_i/iota_i_plus_1);
+      std::cout << "here 5" << std::endl;
+      std::cout << a.tau << " : " << b.tau << std::endl;
+      std::cout << nu_i << " : " << nu_i_plus_1 << std::endl;
+      std::cout << boost::math::tgamma(nu_i) << " : " << boost::math::tgamma(nu_i_plus_1) << std::endl;
+            std::cout << "here 5a" << std::endl;
   result = result - std::log(boost::math::tgamma(nu_i)/boost::math::tgamma(nu_i_plus_1));
+      std::cout << "here 6" << std::endl;
   result = result + (nu_i - nu_i_plus_1)*boost::math::digamma(nu_i);
+      std::cout << "here 7" << std::endl;
   result = result - (iota_i - iota_i_plus_1)*(nu_i/iota_i);
+  std::cout << "here 8" << std::endl;
   return a.weight*result;
 }
 
@@ -148,6 +164,7 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
       auto it_evicted = particles.begin();
       std::advance(it_evicted,std::distance(total_variations.begin(),it_min_total_variation));
       auto it_relocation = it_evicted;
+      it_evicted++; 
       it_relocation++;
       // update ratios
       auto combined_weight = it_relocation -> weight + it_evicted -> weight;

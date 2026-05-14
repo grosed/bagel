@@ -13,7 +13,13 @@ struct unknown_variance
 {
   double nu;
   double iota;
+
+  unknown_variance& operator=(const unknown_variance&);
 };
+
+
+
+
 
 
 
