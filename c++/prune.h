@@ -53,7 +53,6 @@ template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<known_variance,KL_divergence_type::approximate> >; }
 {
-
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
   matrix sigma_i = std::get<1>(transformed);
@@ -104,7 +103,7 @@ template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_divergence_type::approximate> >; }
 {
-    std::cout << "here 1" << std::endl;
+  std::cout << "here 1" << std::endl;
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
   matrix sigma_i = std::get<1>(transformed);

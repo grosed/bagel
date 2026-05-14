@@ -15,7 +15,7 @@
 #include "theorem_3.h"
 #include "theorem_1.h"
 #include "theorem_4.h"
-#include "dnorm.h"
+#include "normal_density.h"
 #include <list>
 #include "prune.h"
 
