@@ -8,7 +8,7 @@
 #include <list>
 #include <boost/math/special_functions/digamma.hpp>
 #include <boost/math/special_functions/gamma.hpp>
-
+#include <cmath>
 
 #include <iostream>
 
@@ -103,41 +103,25 @@ template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_divergence_type::approximate> >; }
 {
-  std::cout << "here 1" << std::endl;
   std::tuple<matrix,matrix> transformed = transform(a);
   matrix mu_i = std::get<0>(transformed);
   matrix sigma_i = std::get<1>(transformed);
   transformed = transform(b);
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
-  
   double nu_i = a.noise_structure.nu;
   double nu_i_plus_1 = b.noise_structure.nu;
   double iota_i = a.noise_structure.iota;
   double iota_i_plus_1 = b.noise_structure.iota;
   matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
   double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
-
-
-  std::cout << "here 2" << std::endl;  
   result = result + (nu_i/iota_i)*((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
-  std::cout << "here 3" << std::endl;
-
-  
-  result = result + std::log((sigma_i_plus_1.inverse() * sigma_i).determinant());
-    std::cout << "here 4" << std::endl;
+  result = result - std::log(sigma_i.determinant()/sigma_i_plus_1.determinant());
+  result = 0.5*result; 
   result = result + nu_i_plus_1 * std::log(iota_i/iota_i_plus_1);
-      std::cout << "here 5" << std::endl;
-      std::cout << a.tau << " : " << b.tau << std::endl;
-      std::cout << nu_i << " : " << nu_i_plus_1 << std::endl;
-      std::cout << boost::math::tgamma(nu_i) << " : " << boost::math::tgamma(nu_i_plus_1) << std::endl;
-            std::cout << "here 5a" << std::endl;
-  result = result - std::log(boost::math::tgamma(nu_i)/boost::math::tgamma(nu_i_plus_1));
-      std::cout << "here 6" << std::endl;
+  result = result - (std::log(std::lgamma(nu_i)) - std::log(std::lgamma(nu_i_plus_1)));
   result = result + (nu_i - nu_i_plus_1)*boost::math::digamma(nu_i);
-      std::cout << "here 7" << std::endl;
   result = result - (iota_i - iota_i_plus_1)*(nu_i/iota_i);
-  std::cout << "here 8" << std::endl;
   return a.weight*result;
 }
 
