@@ -83,6 +83,20 @@ int main(int argc, char* argv[])
 	double y = std::stod(input_line);
 	bagel = update(bagel,y);
 	i++;
+	if(i == 100)
+	  {
+	    std::cout << std::endl;
+	    auto particle_ratios = bagel.ratios();
+	    for(auto& rs : particle_ratios)
+	      {		
+		for(auto& r : rs)
+		  {
+		    std::cout << r << " ";
+		  }
+		std::cout << std::endl;
+	      }
+	  }
+      
 	/*
 	if(i == 100)
 	  {

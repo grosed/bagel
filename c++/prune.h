@@ -10,8 +10,6 @@
 #include <boost/math/special_functions/gamma.hpp>
 #include <cmath>
 
-#include <iostream>
-
 template <typename T>
 std::tuple<matrix,matrix> transform(const T& a)
 {
@@ -148,7 +146,7 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
       std::advance(it_evicted,std::distance(total_variations.begin(),it_min_total_variation));
       auto it_relocation = it_evicted;
       it_evicted++; 
-      it_relocation++;
+      it_relocation++;it_relocation++;
       // update ratios
       auto combined_weight = it_relocation -> weight + it_evicted -> weight;
       auto weight = it_evicted -> weight;
