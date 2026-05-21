@@ -15,7 +15,6 @@ using namespace Rcpp;
 #include "bagel.h"
 
 
-
 template<typename noise, KL_divergence_type KL_divergence>
 struct bagelR
 {   
@@ -58,6 +57,7 @@ struct bagelR
     model.prior_function =  std::bind(&bagelR<noise,KL_divergence>::prior_from_R, this, std::placeholders::_1);
     model.feature_vector_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
     // the transformer needs changing after methods have been added
+    model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::transformation_from_R, this, std::placeholders::_1);
     // model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
   
     sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
@@ -99,7 +99,7 @@ struct bagelR
   }
   
   const matrix& feature_vector_from_R(const int& t,const int& tau)
-  {
+  { 
     return M[tau];
   }
   
@@ -108,7 +108,7 @@ struct bagelR
     return P[t];
   }
 
-  const matrix transformation_from_R(const int& tau)
+  const matrix& transformation_from_R(const int& tau)
   {
     return A[tau];
   }

@@ -6,8 +6,8 @@
 #include "particle_type.h"
 #include "time_type.h"
 #include "real_type.h"
-#include "density_norm.h"
-#include "density_lst.h"
+#include "normal_density.h"
+#include "location_scale_t_density.h"
 #include "KL_divergence_type.h"
 
 
@@ -42,7 +42,7 @@ real_type predict_noise(const particle_type<noise_type,KL_divergence>& particle_
   real_type lst_iota = particle_t.noise_structure.iota;
   
   real_type var_pred = (lst_iota/lst_nu)*(1.0 + temp(0,0));
-  return density_lst(y,2*lst_nu,mu_pred,var_pred);
+  return location_scale_t_density(y,2*lst_nu,mu_pred,var_pred);
 }
 
 template <typename  noise_type, KL_divergence_type KL_divergence>
@@ -58,7 +58,7 @@ real_type predict_noise(const particle_type<noise_type,KL_divergence>& particle_
   matrix temp = H_t_tau.transpose() * sigma_post * H_t_tau;
   real_type mu_pred = predict_mu(particle_t,t);
   real_type var_pred = sigma*sigma*(1.0 + temp(0,0));
-  return density_norm(y,mu_pred,std::sqrt(var_pred));
+  return normal_density(y,mu_pred,std::sqrt(var_pred));
 }
 
 
