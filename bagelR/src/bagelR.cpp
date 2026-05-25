@@ -163,6 +163,11 @@ struct bagelR
   {
     return sp_bagel -> ratios();
   }
+
+int get_max_num_particles()
+  {
+    return sp_bagel -> max_num_particles;
+  }
   
   
 };
@@ -184,6 +189,7 @@ RCPP_MODULE(bagelR)
   .method("set_transformations", &bagelR_uv_exact::set_transformations)
   .method("update", &bagelR_uv_exact::update)
   .method("get_ratios", &bagelR_uv_exact::get_ratios)
+  .method("get_max_num_particles", &bagelR_uv_exact::get_max_num_particles)
 ;
   class_<bagelR_uv_approximate>("bagelR_uv_approximate")
   .constructor<probability_type,probability_type,real_type,real_type,int>()
@@ -195,6 +201,7 @@ RCPP_MODULE(bagelR)
   .method("set_transformations", &bagelR_uv_approximate::set_transformations)
   .method("update", &bagelR_uv_approximate::update)
   .method("get_ratios", &bagelR_uv_approximate::get_ratios)
+  .method("get_max_num_particles", &bagelR_uv_approximate::get_max_num_particles)
 ;
 
 
@@ -209,6 +216,7 @@ RCPP_MODULE(bagelR)
   .method("set_transformations", &bagelR_kv_exact::set_transformations)
   .method("update", &bagelR_kv_exact::update)
   .method("get_ratios", &bagelR_kv_exact::get_ratios)
+  .method("get_max_num_particles", &bagelR_kv_exact::get_max_num_particles)
 ;
   class_<bagelR_kv_approximate>("bagelR_kv_approximate")
   .constructor<probability_type,probability_type,real_type,int>()
@@ -220,6 +228,7 @@ RCPP_MODULE(bagelR)
   .method("set_transformations", &bagelR_kv_approximate::set_transformations)
   .method("update", &bagelR_kv_approximate::update)
   .method("get_ratios", &bagelR_kv_approximate::get_ratios)
+  .method("get_max_num_particles", &bagelR_kv_approximate::get_max_num_particles)
 ;
 
 }

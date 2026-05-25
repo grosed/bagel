@@ -1,10 +1,31 @@
 
 
-setClass("bagel_result_type", slots=list(w0ts = "numeric",weights="numeric",ratios="list",t="numeric"))
+setClass("bagel_result_type", slots=list(y = "numeric",
+                                         threshold = "numeric",
+					 max_particles = "numeric",
+                                         w0ts = "numeric",
+					 weights="numeric",
+					 ratios="list",
+					 taus = "numeric",
+					 t="numeric"))
 
-bagel_result <- function(w0ts,weights,ratios,t)
+bagel_result <- function(y,
+                         threshold,
+			 max_particles,
+                         w0ts,
+			 weights,
+			 ratios,
+			 taus,
+			 t)
 {
-	return(new("bagel_result_type",w0ts=w0ts,weights=weights,ratios=ratios,t=t))
+	return(new("bagel_result_type",y=y,
+	                               threshold=threshold,
+				       max_particles=max_particles,
+	                               w0ts=w0ts,
+				       weights=weights,
+				       ratios=ratios,
+				       taus=taus,
+				       t=t))
 }
 
 
@@ -128,12 +149,18 @@ analyse <- function(Y,threshold,bagel_object)
 	break
       }
    }
-   return(bagel_result(as.numeric(w0ts),
+   return(bagel_result(as.numeric(Y),
+                       threshold,
+		       bagel_object@bagel_object$get_max_num_particles(),
+                       as.numeric(w0ts),
                        as.numeric(bagel_object@bagel_object$get_weights()),
-                       # as.numeric(bagel_object@bagel_object$get_ratios()),
 		       bagel_object@bagel_object$get_ratios(),
+		       as.numeric(bagel_object@bagel_object$get_taus()),	
                        bagel_object@bagel_object$get_time()))  
 }
+
+
+
 
 
 
@@ -161,3 +188,63 @@ update <- function(object,y)
 	bagel_object$set_transformations(taus,Map(function(tau) return(transform(tau)),taus))
 	return(bagel_object$update(y))
 }
+
+
+# weights
+setGeneric("weights",function(object) standardGeneric("weights"))
+setMethod("weights","bagel_result_type",
+          function(object)
+	  {
+	    return(Reduce(c,Map("*",object@weights,object@ratios)))
+	  })
+
+
+# active_weights
+setGeneric("active_weights",function(object) standardGeneric("active_weights"))
+setMethod("active_weights","bagel_result_type",
+          function(object)
+	  {
+	    return(object@weights)
+	  })
+
+
+# taus
+setGeneric("taus",function(object) standardGeneric("taus"))
+setMethod("taus","bagel_result_type",
+          function(object)
+	  {
+	    return(object@taus)
+	  })
+
+
+
+# ratios
+setGeneric("ratios",function(object) standardGeneric("ratios"))
+setMethod("ratios","bagel_result_type",
+          function(object)
+	  {
+	    return(object@ratios)	
+	  })
+
+
+# weights_tau_zero
+setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
+setMethod("weights_tau_zero","bagel_result_type",
+          function(object)
+	  {
+	    return(object@w0ts)
+	  })
+
+
+
+# time
+setGeneric("time",function(object) standardGeneric("time"))
+setMethod("time","bagel_result_type",
+          function(object)
+	  {
+	    # note - time is incremented preemptivley by bagel object
+	    return(object@t - 1)
+	  })
+
+
+
