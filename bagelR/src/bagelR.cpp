@@ -1,5 +1,7 @@
+
 #include <Rcpp.h>
 using namespace Rcpp;
+
 
 #include <RcppEigen.h>
 
@@ -49,7 +51,6 @@ struct bagelR
 	 const real_type& sigma,
 	 const int& n)
   {
-    
     noise_structure.sigma = sigma;
     
     model_type model;
@@ -63,7 +64,11 @@ struct bagelR
     sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
   }
   
- 
+
+  ~bagelR()
+  {
+  }
+  
   real_type update(const real_type& x)
   {
     sp_bagel -> update(x);

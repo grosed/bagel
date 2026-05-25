@@ -39,7 +39,7 @@ setClass("bagel_uv_approximate_type", slots=list(feature_vector = "function",
 				                 nu = "numeric",
 	                                         iota = "numeric",	
 				                 max_particles = "numeric",
-				                 bagel_object = "Rcpp_bagelR_uv_approximate"))
+				                 bagel_object = "ANY"))
 
 bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold)
 {
@@ -65,7 +65,7 @@ setClass("bagel_uv_exact_type", slots=list(feature_vector = "function",
 				           nu = "numeric",
 	                                   iota = "numeric",	
 				           max_particles = "numeric",
-				           bagel_object = "Rcpp_bagelR_uv_exact"))
+				           bagel_object = "ANY"))
 
 bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold)
 {
@@ -91,7 +91,7 @@ setClass("bagel_kv_approximate_type", slots=list(feature_vector = "function",
 				                 p = "numeric",
 				                 sigma = "numeric",
 				                 max_particles = "numeric",
-				                 bagel_object = "Rcpp_bagelR_kv_approximate"))
+				                 bagel_object = "ANY"))
 
 bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold)
 {
@@ -116,7 +116,7 @@ setClass("bagel_kv_exact_type", slots=list(feature_vector = "function",
 				           p = "numeric",
 				           sigma = "numeric",
 				           max_particles = "numeric",
-				           bagel_object = "Rcpp_bagelR_kv_exact"))
+				           bagel_object = "ANY"))
 
 bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold)
 {
@@ -151,7 +151,7 @@ analyse <- function(Y,threshold,bagel_object)
    }
    return(bagel_result(as.numeric(Y),
                        threshold,
-		       bagel_object@bagel_object$get_max_num_particles(),
+		       314, # bagel_object@bagel_object$get_max_num_particles(),
                        as.numeric(w0ts),
                        as.numeric(bagel_object@bagel_object$get_weights()),
 		       bagel_object@bagel_object$get_ratios(),
