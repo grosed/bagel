@@ -2,7 +2,6 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-#include <iostream>
 
 #include <RcppEigen.h>
 
@@ -34,7 +33,6 @@ struct bagelR
 	 const real_type& iota,
 	 const int& n)
   {
-    std::cout << "creating uv : I am -> " << this << std::endl;
     noise_structure.nu = nu;
     noise_structure.iota = iota;
     
@@ -53,7 +51,6 @@ struct bagelR
 	 const real_type& sigma,
 	 const int& n)
   {
-    std::cout << "creating kv : I am -> " << this << std::endl;
     noise_structure.sigma = sigma;
     
     model_type model;
@@ -70,7 +67,6 @@ struct bagelR
 
   ~bagelR()
   {
-    std::cout << "dying : I am -> " << this << std::endl;
   }
   
   real_type update(const real_type& x)
@@ -118,7 +114,7 @@ struct bagelR
   }
 
   const matrix& transformation_from_R(const int& tau)
-  {
+  {    
     return A[tau];
   }
 

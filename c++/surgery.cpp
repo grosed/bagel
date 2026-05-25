@@ -57,19 +57,19 @@ int main(int argc, char* argv[])
 
   model_type model;
 
+  
+  model.transformer_function =  transformation_example_1;
+  model.prior_function =  prior_example_1;
+  model.feature_vector_function =  feature_vector_example_1;
+  
   /*
   model.transformer_function =  transformation_example_2;
   model.prior_function =  prior_example_2;
   model.feature_vector_function =  feature_vector_example_2;
   */
   
-  model.transformer_function =  transformation_example_2;
-  model.prior_function =  prior_example_2;
-  model.feature_vector_function =  feature_vector_example_2;
-  
-  
-  bagel_type<unknown_variance,KL_divergence_type::approximate> bagel(model,
-								     uv, //kv,
+  bagel_type<known_variance,KL_divergence_type::approximate> bagel(model,
+								     kv, //kv,
 								     p0,p,n);
   
   std::string input_line;

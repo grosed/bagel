@@ -150,14 +150,16 @@ analyse <- function(Y,threshold,bagel_object)
 	break
       }
    }
-   return(bagel_result(as.numeric(Y),
+   results <- bagel_result(as.numeric(Y),
                        threshold,
 		       314, # bagel_object@bagel_object$get_max_num_particles(),
                        as.numeric(w0ts),
                        as.numeric(bagel_object@bagel_object$get_weights()),
 		       bagel_object@bagel_object$get_ratios(),
 		       as.numeric(bagel_object@bagel_object$get_taus()),	
-                       bagel_object@bagel_object$get_time()))  
+                       bagel_object@bagel_object$get_time())
+  return(results)
+	
 }
 
 
@@ -173,23 +175,24 @@ analyse <- function(Y,threshold,bagel_object)
 
 update <- function(object,y)
 {
+
         bagel_object <- object@bagel_object 
 	feature_vector <- object@feature_vector
 	prior <- object@prior
 	transform <- object@transform
 	taus <- bagel_object$get_taus()
 	t <- bagel_object$get_time()
-	taus <- c(taus,t-1)
+	tt <- seq(0,t+1,1)
+	taus <- c(taus,t-1)	
 	bagel_object$set_feature_vectors(taus,Map(function(tau) return(feature_vector(t,tau)),taus))
-	ts <- c(taus[-1],t)
+	ts <- c(1,taus[-1],t)
 	priors <- Map(prior,ts)
 	prior_mus <- Map(function(x) return(x$mu), priors)
 	prior_sigmas <- Map(function(x) x$sigma, priors)
 	bagel_object$set_priors(ts,prior_mus,prior_sigmas)
 	bagel_object$set_transformations(taus,Map(function(tau) return(transform(tau)),taus))
-        print("calling out to c++ update")
+	# bagel_object$set_transformations(tt,Map(function(tau) return(transform(tau)),tt))
         result <- bagel_object$update(y)
-	print("returned from c++ update")	
 	return(result)
 }
 
