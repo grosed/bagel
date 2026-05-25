@@ -1,5 +1,6 @@
 
 
+
 setClass("bagel_result_type", slots=list(y = "numeric",
                                          threshold = "numeric",
 					 max_particles = "numeric",
@@ -186,7 +187,10 @@ update <- function(object,y)
 	prior_sigmas <- Map(function(x) x$sigma, priors)
 	bagel_object$set_priors(ts,prior_mus,prior_sigmas)
 	bagel_object$set_transformations(taus,Map(function(tau) return(transform(tau)),taus))
-	return(bagel_object$update(y))
+        print("calling out to c++ update")
+        result <- bagel_object$update(y)
+	print("returned from c++ update")	
+	return(result)
 }
 
 
