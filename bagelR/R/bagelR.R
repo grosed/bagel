@@ -152,7 +152,7 @@ analyse <- function(Y,threshold,bagel_object)
    }
    results <- bagel_result(as.numeric(Y),
                        threshold,
-		       314, # bagel_object@bagel_object$get_max_num_particles(),
+		       bagel_object@bagel_object$get_max_num_particles(),
                        as.numeric(w0ts),
                        as.numeric(bagel_object@bagel_object$get_weights()),
 		       bagel_object@bagel_object$get_ratios(),
@@ -175,7 +175,6 @@ analyse <- function(Y,threshold,bagel_object)
 
 update <- function(object,y)
 {
-
         bagel_object <- object@bagel_object 
 	feature_vector <- object@feature_vector
 	prior <- object@prior
@@ -191,7 +190,6 @@ update <- function(object,y)
 	prior_sigmas <- Map(function(x) x$sigma, priors)
 	bagel_object$set_priors(ts,prior_mus,prior_sigmas)
 	bagel_object$set_transformations(taus,Map(function(tau) return(transform(tau)),taus))
-	# bagel_object$set_transformations(tt,Map(function(tau) return(transform(tau)),tt))
         result <- bagel_object$update(y)
 	return(result)
 }
@@ -251,6 +249,27 @@ setMethod("time","bagel_result_type",
 	  {
 	    # note - time is incremented preemptivley by bagel object
 	    return(object@t - 1)
+	  })
+
+# max_particles
+setGeneric("max_particles",function(object) standardGeneric("max_particles"))
+setMethod("max_particles","bagel_result_type",
+          function(object)
+	  {
+	    return(object@max_particles)
+	  })
+
+
+# changepoint
+setGeneric("changepoint",function(object) standardGeneric("changepoint"))
+setMethod("changepoint","bagel_result_type",
+          function(object)
+	  {
+	    if(object@t - 1 < length(object@y))
+	    {
+	      return(list("location"=which.max(weights(object)[-1]),"detected"=time(object)))
+	    }
+	    return(NA)
 	  })
 
 
