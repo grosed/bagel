@@ -42,7 +42,8 @@ real_type predict_noise(const particle_type<noise_type,KL_divergence>& particle_
   real_type lst_iota = particle_t.noise_structure.iota;
   
   real_type var_pred = (lst_iota/lst_nu)*(1.0 + temp(0,0));
-  return location_scale_t_density(y,2*lst_nu,mu_pred,var_pred);
+  real_type scale_pred = std::sqrt(var_pred);
+  return location_scale_t_density(y,2*lst_nu,mu_pred,scale_pred);
 }
 
 template <typename  noise_type, KL_divergence_type KL_divergence>
