@@ -2,6 +2,100 @@
 setClass("bagel_type")
 
 
+sequential_bagel_kv_exact <- function(feature_vector,prior,transform,p0,p,sigma,max_particles)
+{
+   bagel_object <- new("bagel_kv_exact_type",feature_vector=feature_vector,
+				             prior=prior,
+			                     transform=transform,
+			                     p0=p0,
+			                     p=p,
+			                     sigma=sigma,
+			                     max_particles=max_particles,
+			                     bagel_object=new(bagelR_kv_exact,p0,p,sigma,max_particles))
+  return(bagel_object)
+
+}
+
+
+# set_weights
+setGeneric("set_weights",function(object,weights) standardGeneric("set_weights"))
+setMethod("set_weights","bagel_type",
+          function(object,weights)
+	  {
+         object@bagel_object$set_weights(weights)     
+	  })
+
+
+# weights
+setGeneric("weights",function(object) standardGeneric("weights"))
+setMethod("weights","bagel_type",
+          function(object)
+	  {
+
+	    return(Reduce(c,Map("*",object@bagel_object$get_weights(),object@bagel_object$get_ratios())))
+
+	  })
+
+
+# active_weights
+setGeneric("active_weights",function(object) standardGeneric("active_weights"))
+setMethod("active_weights","bagel_type",
+          function(object)
+	  {
+        return(object@bagel_object$get_weights())
+	  })
+
+
+# taus
+setGeneric("taus",function(object) standardGeneric("taus"))
+setMethod("taus","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_taus())
+	  })
+
+
+
+# ratios
+setGeneric("ratios",function(object) standardGeneric("ratios"))
+setMethod("ratios","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_ratios())	
+	  })
+
+
+# weights_tau_zero
+setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
+setMethod("weights_tau_zero","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_weights()[1])
+	  })
+
+
+
+# time
+setGeneric("time",function(object) standardGeneric("time"))
+setMethod("time","bagel_type",
+          function(object)
+	  {
+	    # note - time is incremented preemptivley by bagel object
+	    return(object@bagel_object$get_time() - 1)
+	  })
+
+# max_particles
+setGeneric("max_particles",function(object) standardGeneric("max_particles"))
+setMethod("max_particles","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_max_num_particles())
+	  })
+
+
+
+
+
 setClass("bagel_result_type", slots=list(y = "numeric",
                                          threshold = "numeric",
 					 max_particles = "numeric",
