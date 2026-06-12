@@ -298,7 +298,7 @@ update <- function(object,y)
 
 
 # weights
-setGeneric("weights",function(object) standardGeneric("weights"))
+#setGeneric("weights",function(object) standardGeneric("weights"))
 setMethod("weights","bagel_result_type",
           function(object)
 	  {
@@ -307,7 +307,7 @@ setMethod("weights","bagel_result_type",
 
 
 # active_weights
-setGeneric("active_weights",function(object) standardGeneric("active_weights"))
+#setGeneric("active_weights",function(object) standardGeneric("active_weights"))
 setMethod("active_weights","bagel_result_type",
           function(object)
 	  {
@@ -316,7 +316,7 @@ setMethod("active_weights","bagel_result_type",
 
 
 # taus
-setGeneric("taus",function(object) standardGeneric("taus"))
+#setGeneric("taus",function(object) standardGeneric("taus"))
 setMethod("taus","bagel_result_type",
           function(object)
 	  {
@@ -326,7 +326,7 @@ setMethod("taus","bagel_result_type",
 
 
 # ratios
-setGeneric("ratios",function(object) standardGeneric("ratios"))
+#setGeneric("ratios",function(object) standardGeneric("ratios"))
 setMethod("ratios","bagel_result_type",
           function(object)
 	  {
@@ -335,7 +335,7 @@ setMethod("ratios","bagel_result_type",
 
 
 # weights_tau_zero
-setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
+#setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
 setMethod("weights_tau_zero","bagel_result_type",
           function(object)
 	  {
@@ -345,7 +345,7 @@ setMethod("weights_tau_zero","bagel_result_type",
 
 
 # time
-setGeneric("time",function(object) standardGeneric("time"))
+#setGeneric("time",function(object) standardGeneric("time"))
 setMethod("time","bagel_result_type",
           function(object)
 	  {
@@ -354,7 +354,7 @@ setMethod("time","bagel_result_type",
 	  })
 
 # max_particles
-setGeneric("max_particles",function(object) standardGeneric("max_particles"))
+#setGeneric("max_particles",function(object) standardGeneric("max_particles"))
 setMethod("max_particles","bagel_result_type",
           function(object)
 	  {
