@@ -127,7 +127,7 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
   result = result - std::log(sigma_i.determinant()/sigma_i_plus_1.determinant());
   result = 0.5*result; 
   result = result + nu_i_plus_1 * std::log(iota_i/iota_i_plus_1);
-  result = result - (std::log(std::lgamma(nu_i)) - std::log(std::lgamma(nu_i_plus_1)));
+  result = result - (std::lgamma(nu_i) - std::lgamma(nu_i_plus_1));
   result = result + (nu_i - nu_i_plus_1)*boost::math::digamma(nu_i);
   result = result - (iota_i - iota_i_plus_1)*(nu_i/iota_i);
   return a.weight*result;
@@ -140,23 +140,68 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
   // return particles;
   if(particles.size() > max_num_particles && particles.size() > 3)
     {
-      auto it_1 = particles.begin();
-      it_1++;
-      auto it_2 = particles.begin();
-      it_2++;it_2++;
-      auto it_n_minus_1 = particles.end();
-      it_n_minus_1--;
-      // generate total variations between adjacent particles
-      std::list<double> total_variations;      
-      std::transform(it_1,it_n_minus_1,it_2,std::back_inserter(total_variations),[](auto& a,auto& b){return total_variation(a,b);});
+      // auto it_1 = particles.begin();
+      // it_1++;
+      // auto it_2 = particles.begin();
+      // it_2++;it_2++;
+      // auto it_n_minus_1 = particles.end();
+      // it_n_minus_1--;
+      // // generate total variations between adjacent particles
+      // std::list<double> total_variations;      
+      // std::transform(it_1,it_n_minus_1,it_2,std::back_inserter(total_variations),[](auto& a,auto& b){return total_variation(a,b);});
+      // // locate the minimum total variation
+      // auto it_min_total_variation = std::min_element(total_variations.begin(),total_variations.end());
+      // // locate the particle to be evicted from the particle population
+      // auto it_evicted = particles.begin();
+      // std::advance(it_evicted,std::distance(total_variations.begin(),it_min_total_variation));
+      // auto it_relocation = it_evicted;
+      // it_evicted++; 
+      // it_relocation++;it_relocation++;
+      auto it_first_cp = particles.begin();
+      it_first_cp++;  // skip tau = 0
+
+      auto it_second_cp = it_first_cp;
+      it_second_cp++;
+
+      auto it_newest = particles.end();
+      it_newest--;    // newest particle, should be protected
+
+      auto it_last_old_cp = it_newest;
+      it_last_old_cp--;  // last changepoint particle before newest
+
+      // Compare only old adjacent changepoint particles:
+      // (first_cp, second_cp), ..., (..., last_old_cp)
+      // Exclude newest from both left and right side.
+      std::list<double> total_variations;
+
+      std::transform(
+        it_first_cp,
+        it_last_old_cp,
+        it_second_cp,
+        std::back_inserter(total_variations),
+        [](auto& a, auto& b) {
+          return total_variation(a, b);
+        }
+      );
+
+      if (total_variations.empty()) {
+        return particles;
+      }
+
       // locate the minimum total variation
-      auto it_min_total_variation = std::min_element(total_variations.begin(),total_variations.end());
-      // locate the particle to be evicted from the particle population
-      auto it_evicted = particles.begin();
-      std::advance(it_evicted,std::distance(total_variations.begin(),it_min_total_variation));
+      auto it_min_total_variation =
+        std::min_element(total_variations.begin(), total_variations.end());
+
+      // locate the particle to be evicted
+      auto it_evicted = it_first_cp;
+      std::advance(
+        it_evicted,
+        std::distance(total_variations.begin(), it_min_total_variation)
+      );
+
+      // relocate weight to the right neighbour
       auto it_relocation = it_evicted;
-      it_evicted++; 
-      it_relocation++;it_relocation++;
+      it_relocation++;
       // update ratios
       auto combined_weight = it_relocation -> weight + it_evicted -> weight;
       auto weight = it_evicted -> weight;
