@@ -59,5 +59,5 @@ packageVersion("bagelR")
 
 ## Using bagelR
 
-See [here](https://github.com/grosed/bagel/blob/development/notebooks/basic-examples.ipynb) for details of and examples showing how to use **bagelR**.
+See [here](https://github.com/grosed/bagel/blob/development/notebooks/examples.ipynb) for details of and examples showing how to use **bagelR**.
 
