@@ -77,12 +77,14 @@ struct bagelR
 
 
 
-  void set_weights(const std::vector<real_type>& weights)
+void set_weights(const std::vector<real_type>& weights)
   {
-    std::transform(weights.begin(),
-		   weights.end(),
-		   sp_bagel->particles.begin(),
-		   [](auto& weight,auto& particle){particle.weight = weight;});  
+    auto it_particle = sp_bagel->particles.begin();
+    for(auto& weight : weights)
+      {
+	it_particle -> weight = weight;
+	it_particle++;
+      }
   }
   
   
