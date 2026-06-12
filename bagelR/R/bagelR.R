@@ -16,6 +16,51 @@ sequential_bagel_kv_exact <- function(feature_vector,prior,transform,p0,p,sigma,
 
 }
 
+sequential_bagel_uv_exact <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles)
+{
+   bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
+						   prior=prior,
+			                  	   transform=transform,
+			                  	   p0=p0,
+			                  	   p=p,
+			                  	   nu=nu,
+			                  	   iota=iota,
+			                  	   max_particles=max_particles,
+			                  	   bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles))
+  return(bagel_object)				   
+}
+
+
+sequential_bagel_kv_approximate <- function(feature_vector,prior,transform,p0,p,sigma,max_particles)
+{
+   bagel_object <- new("bagel_kv_exact_type",feature_vector=feature_vector,
+				             prior=prior,
+			                     transform=transform,
+			                     p0=p0,
+			                     p=p,
+			                     sigma=sigma,
+			                     max_particles=max_particles,
+			                     bagel_object=new(bagelR_kv_approximate,p0,p,sigma,max_particles))
+  return(bagel_object)
+
+}
+
+sequential_bagel_uv_approximate <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles)
+{
+   bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
+						   prior=prior,
+			                  	   transform=transform,
+			                  	   p0=p0,
+			                  	   p=p,
+			                  	   nu=nu,
+			                  	   iota=iota,
+			                  	   max_particles=max_particles,
+			                  	   bagel_object=new(bagelR_uv_approximate,p0,p,nu,iota,max_particles))
+  return(bagel_object)				   
+}
+
+
+
 
 # set_weights
 setGeneric("set_weights",function(object,weights) standardGeneric("set_weights"))
