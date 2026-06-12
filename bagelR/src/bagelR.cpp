@@ -74,6 +74,16 @@ struct bagelR
     sp_bagel -> update(x);
     return sp_bagel -> weight_0_t();
   }
+
+
+
+  void set_weights(const std::vector<real_type>& weights)
+  {
+    std::transform(weights.begin(),
+		   weights.end(),
+		   sp_bagel->particles.begin(),
+		   [](auto& weight,auto& particle){particle.weight = weight;});  
+  }
   
   
   std::list<double> get_weights()
@@ -189,6 +199,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_uv_exact::get_time)
   .method("get_taus", &bagelR_uv_exact::get_taus)
   .method("get_weights", &bagelR_uv_exact::get_weights)
+  .method("set_weights", &bagelR_uv_exact::get_weights)
   .method("set_feature_vectors", &bagelR_uv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_uv_exact::set_priors)
   .method("set_transformations", &bagelR_uv_exact::set_transformations)
@@ -201,6 +212,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_uv_approximate::get_time)
   .method("get_taus", &bagelR_uv_approximate::get_taus)
   .method("get_weights", &bagelR_uv_approximate::get_weights)
+  .method("set_weights", &bagelR_uv_approximate::get_weights)
   .method("set_feature_vectors", &bagelR_uv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_uv_approximate::set_priors)
   .method("set_transformations", &bagelR_uv_approximate::set_transformations)
@@ -216,6 +228,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_kv_exact::get_time)
   .method("get_taus", &bagelR_kv_exact::get_taus)
   .method("get_weights", &bagelR_kv_exact::get_weights)
+  .method("set_weights", &bagelR_kv_exact::get_weights)
   .method("set_feature_vectors", &bagelR_kv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_kv_exact::set_priors)
   .method("set_transformations", &bagelR_kv_exact::set_transformations)
@@ -228,6 +241,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_kv_approximate::get_time)
   .method("get_taus", &bagelR_kv_approximate::get_taus)
   .method("get_weights", &bagelR_kv_approximate::get_weights)
+  .method("set_weights", &bagelR_kv_approximate::get_weights)
   .method("set_feature_vectors", &bagelR_kv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_kv_approximate::set_priors)
   .method("set_transformations", &bagelR_kv_approximate::set_transformations)
