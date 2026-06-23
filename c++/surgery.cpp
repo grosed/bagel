@@ -67,6 +67,7 @@ int main(int argc, char* argv[])
         getline(std::cin, input_line);
 	double y = std::stod(input_line);
 	bagel = update(bagel,y);
+	std::cout << weight_0_t(bagel) << std::endl;
 	// test for threshold
 	if(1.0 - weight_0_t(bagel) > t)
 	  {

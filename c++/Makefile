@@ -1,6 +1,9 @@
 
 CXX = g++
-CXXFLAGS = -std=c++20  -O3  -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_NO_STATIC_ASSERT -I./
+# release
+# CXXFLAGS = -std=c++20  -O3  -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_NO_STATIC_ASSERT -I./
+# debug
+CXXFLAGS = -std=c++20  -g -Og   -I./
 
 TARGET = surgery
 
