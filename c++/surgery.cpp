@@ -17,6 +17,7 @@
 int main(int argc, char* argv[])
 {
 
+  // read command line arguments
   std::tuple<double,double,double,int,double> command_line_args;
   try
     {
@@ -27,9 +28,6 @@ int main(int argc, char* argv[])
       std::cerr << e.what() << std::endl;
     }
 
-
-  prior_function_type prior_function = prior_example_2;
-  feature_vector_function_type feature_vector_function = feature_vector_example_2;
   
   probability_type p0 = std::get<0>(command_line_args);
   probability_type p = std::get<1>(command_line_args); 
@@ -37,17 +35,8 @@ int main(int argc, char* argv[])
   int n = std::get<3>(command_line_args);
   real_type t = std::get<4>(command_line_args);
 
-  // dummy
-  real_type lst_nu = 1.0;
-  real_type lst_mu = 0.0;
-
-  /*
-  known_variance kv;
-  kv.sigma = s;
-  bagel_type<known_variance,KL_divergence_type::exact> bagel(prior_function,feature_vector_function,kv,p0,p,s,lst_nu,lst_mu,false,n);
-  */
-
-
+  
+  // set up noise models
   known_variance kv;
   kv.sigma = 1.0;
   
@@ -55,23 +44,19 @@ int main(int argc, char* argv[])
   uv.nu = 1.0;
   uv.iota = 1.0;
 
+  // set up model
   model_type model;
 
-  
   model.transformer_function =  transformation_example_1;
   model.prior_function =  prior_example_1;
   model.feature_vector_function =  feature_vector_example_1;
   
-  /*
-  model.transformer_function =  transformation_example_2;
-  model.prior_function =  prior_example_2;
-  model.feature_vector_function =  feature_vector_example_2;
-  */
   
   bagel_type<known_variance,KL_divergence_type::approximate> bagel(model,
 								     kv, //kv,
 								     p0,p,n);
-  
+
+  // read data from stdin
   std::string input_line;
   try
     {
@@ -82,46 +67,14 @@ int main(int argc, char* argv[])
         getline(std::cin, input_line);
 	double y = std::stod(input_line);
 	bagel = update(bagel,y);
-	i++;
-	if(i == 100)
-	  {
-	    std::cout << std::endl;
-	    auto particle_ratios = bagel.ratios();
-	    for(auto& rs : particle_ratios)
-	      {		
-		for(auto& r : rs)
-		  {
-		    std::cout << r << " ";
-		  }
-		std::cout << std::endl;
-	      }
-	  }
-      
-	/*
-	if(i == 100)
-	  {
-	    int j = 0;
-	    for(auto& p : bagel.particles)
-	      {
-		std::cout << j << "------------------------" << std::endl;
-		std::cout << p.post.sigma << std::endl;
-		j++;
-	      }
-	  }
-	*/
-	std::cout << i << " : " << weight_0_t(bagel) << std::endl;
+	// test for threshold
 	if(1.0 - weight_0_t(bagel) > t)
 	  {
+	    // report prediction
 	    std::cout << std::endl;
-	    auto particle_ratios = bagel.ratios();
-	    for(auto& rs : particle_ratios)
-	      {		
-		for(auto& r : rs)
-		  {
-		    std::cout << r << " ";
-		  }
-		std::cout << std::endl;
-	      }
+	    std::cout << "----------------------------" << std::endl;
+	    std::cout << "change detected at t = " << bagel.t << std::endl;
+	    std::cout << "----------------------------" << std::endl;
 	    break;
 	  }
 	
