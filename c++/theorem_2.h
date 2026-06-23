@@ -57,7 +57,7 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
   particle_t.post.sigma.block(0,0,d1,d1) = top_left;    
   particle_t.post.sigma.block(0,d1,d1,d2) = top_right;
   particle_t.post.sigma.block(d1,0,d2,d1) = bottom_left;
-  particle_t.post.sigma.block(d1,d2,d2,d2) = bottom_right;
+  particle_t.post.sigma.block(d1,d1,d2,d2) = bottom_right;
 
   particle_t.post.mu.block(0,0,d1,1) = top;
   particle_t.post.mu.block(d1,0,d2,1) = bottom;
