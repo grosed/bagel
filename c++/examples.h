@@ -12,4 +12,13 @@ feature_vector_type feature_vector_example_1(const int&, const int&);
 matrix transformation_example_1(const time_type&);
 
 
+prior_type prior_daily(const int&);
+feature_vector_type feature_vector_daily(const int&, const int&);
+matrix transformation_daily(const time_type&);
+
+
+
+
+
+
 #endif

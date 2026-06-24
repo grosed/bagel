@@ -47,9 +47,15 @@ int main(int argc, char* argv[])
   // set up model
   model_type model;
 
+  /*
   model.transformer_function =  transformation_example_1;
   model.prior_function =  prior_example_1;
   model.feature_vector_function =  feature_vector_example_1;
+  */
+  
+  model.transformer_function =  transformation_daily;
+  model.prior_function =  prior_daily;
+  model.feature_vector_function =  feature_vector_daily;
   
   
   bagel_type<known_variance,KL_divergence_type::approximate> bagel(model,

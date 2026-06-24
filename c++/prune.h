@@ -140,23 +140,26 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
   // return particles;
   if(particles.size() > max_num_particles && particles.size() > 3)
     {
-      // auto it_1 = particles.begin();
-      // it_1++;
-      // auto it_2 = particles.begin();
-      // it_2++;it_2++;
-      // auto it_n_minus_1 = particles.end();
-      // it_n_minus_1--;
-      // // generate total variations between adjacent particles
-      // std::list<double> total_variations;      
-      // std::transform(it_1,it_n_minus_1,it_2,std::back_inserter(total_variations),[](auto& a,auto& b){return total_variation(a,b);});
-      // // locate the minimum total variation
-      // auto it_min_total_variation = std::min_element(total_variations.begin(),total_variations.end());
-      // // locate the particle to be evicted from the particle population
-      // auto it_evicted = particles.begin();
-      // std::advance(it_evicted,std::distance(total_variations.begin(),it_min_total_variation));
-      // auto it_relocation = it_evicted;
-      // it_evicted++; 
-      // it_relocation++;it_relocation++;
+      auto it_1 = particles.begin();
+      it_1++;
+      auto it_2 = particles.begin();
+      it_2++;it_2++;
+      auto it_n_minus_1 = particles.end();
+      it_n_minus_1--;
+      // generate total variations between adjacent particles
+      std::list<double> total_variations;      
+      std::transform(it_1,it_n_minus_1,it_2,std::back_inserter(total_variations),[](auto& a,auto& b){return total_variation(a,b);});
+      // locate the minimum total variation
+      auto it_min_total_variation = std::min_element(total_variations.begin(),total_variations.end());
+      // locate the particle to be evicted from the particle population
+      auto it_evicted = particles.begin();
+      std::advance(it_evicted,std::distance(total_variations.begin(),it_min_total_variation));
+      auto it_relocation = it_evicted;
+      it_evicted++; 
+      it_relocation++;it_relocation++;
+
+
+      /*
       auto it_first_cp = particles.begin();
       it_first_cp++;  // skip tau = 0
 
@@ -202,6 +205,10 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
       // relocate weight to the right neighbour
       auto it_relocation = it_evicted;
       it_relocation++;
+
+
+      */
+      
       // update ratios
       auto combined_weight = it_relocation -> weight + it_evicted -> weight;
       auto weight = it_evicted -> weight;

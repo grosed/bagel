@@ -98,6 +98,65 @@ matrix transformation_example_1(const time_type& tau)
 }
 
 
+feature_vector_type feature_vector_daily(const int& t, const int& tau)
+{
+
+  if(tau == 0)
+    {
+      feature_vector_type h = Eigen::MatrixXd::Zero(7,1);
+      h(0,0) = h(t%7,0) = 1.0;
+      return h;
+    }
+  else
+    {
+      feature_vector_type h = Eigen::MatrixXd::Zero(8,1);
+      h(0,0) = h(t%7,0) = 1.0;
+      if(t > tau)
+	{
+	  h(7,0) = 1.0;
+	  return h;
+	}
+    }
+}
+
+
+
+
+prior_type prior_daily(const int& t)
+{
+  if(t == 1)
+    {
+      prior_type prior;
+      prior.mu = Eigen::MatrixXd::Zero(7,1);
+      prior.sigma = Eigen::MatrixXd::Identity(7,7);
+      prior.sigma(0,0) = 10.0;
+      return prior;
+    }
+  else
+    {
+      prior_type prior;
+      prior.mu = Eigen::MatrixXd::Zero(8,1);
+      prior.sigma = Eigen::MatrixXd::Identity(8,8);
+      prior.sigma(0,0) = 10.0;
+      return prior;
+    }
+}
+
+matrix transformation_daily(const time_type& tau)
+{
+   matrix A = Eigen::MatrixXd::Zero(1,8);
+   A(0,0) = A(0,7) = 1.0;
+   return A;
+}
+
+
+
+
+
+
+
+
+
 
 
 
