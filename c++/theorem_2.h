@@ -41,7 +41,7 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
 
   
   matrix sigma_gamma_beta_t = prior_t.sigma.block(d1,0,d2,d1);
-  matrix sigma_gamma_gamma_t = prior_t.sigma.block(d1,d2,d2,d2);
+  matrix sigma_gamma_gamma_t = prior_t.sigma.block(d1,d1,d2,d2);
   
   matrix mu_beta_t = prior_t.mu.block(0,0,d1,1);     
   matrix mu_gamma_t = prior_t.mu.block(d1,0,d2,1);
