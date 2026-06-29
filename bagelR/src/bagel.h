@@ -22,7 +22,6 @@
 #include "model_type.h"
 
 
-
 template<typename noise, KL_divergence_type KL_divergence>
 struct bagel_type
 {
@@ -100,43 +99,6 @@ struct bagel_type
 	  }
 
 	particles = prune(particles,max_num_particles);
-	/*
-	// prune
-	if(particles.size() > max_num_particles && particles.size() > 3)
-	  {
-	    auto it_1 = particles.begin();
-	    it_1++;
-	    auto it_n_minus_1 = particles.end();
-	    it_n_minus_1--;
-	    it_n_minus_1--; 
-	    auto it_min = std::min_element(it_1,
-					   it_n_minus_1,
-					   [](auto& x,auto& y){return x.weight < y.weight;});		 
-	    auto it_right_of_min = it_min;
-	    it_right_of_min++;
-	    // update ratios
-	    auto combined_weight = it_right_of_min -> weight + it_min -> weight;
-	    auto weight = it_min -> weight;
-	    std::transform(it_min->ratios.begin(),
-			   it_min->ratios.end(),
-			   it_min->ratios.begin(),
-			   [&combined_weight,&weight](auto& ratio){return ratio*weight/combined_weight;});
-	    weight = it_right_of_min -> weight;
-	    std::transform(it_right_of_min->ratios.begin(),
-			   it_right_of_min->ratios.end(),
-			   it_right_of_min->ratios.begin(),
-			   [&combined_weight,&weight](auto& ratio){return ratio*weight/combined_weight;});
-	    it_right_of_min->ratios.insert(it_right_of_min->ratios.begin(),it_min->ratios.begin(),it_min->ratios.end());
-	  
-	    // update weights
-	    it_right_of_min -> weight += it_min -> weight;
-
-	    // evict the pruned particle
-	    particles.erase(it_min);
-	  }
-	*/
-
-	
       }
     t = t + 1; 
     return *this;

@@ -26,10 +26,13 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
   prior_type prior_t = particle_0.model.prior_function(t);
   
   int d1 = prior_1.mu.rows();
-  int d2 = prior_1.sigma.rows();
+  int d2 = prior_t.mu.rows() - d1;
   int n = d1 + d2;
 
-
+  // resize particle post matrices
+  particle_t.post.mu = Eigen::MatrixXd::Zero(n,1);
+  particle_t.post.sigma = Eigen::MatrixXd::Zero(n,n);
+  
 
   
   matrix sigma_beta_beta_t = prior_t.sigma.block(0,0,d1,d1);     
@@ -38,7 +41,7 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
 
   
   matrix sigma_gamma_beta_t = prior_t.sigma.block(d1,0,d2,d1);
-  matrix sigma_gamma_gamma_t = prior_t.sigma.block(d1,d2,d2,d2);
+  matrix sigma_gamma_gamma_t = prior_t.sigma.block(d1,d1,d2,d2);
   
   matrix mu_beta_t = prior_t.mu.block(0,0,d1,1);     
   matrix mu_gamma_t = prior_t.mu.block(d1,0,d2,1);
@@ -55,9 +58,9 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
   particle_t.post.sigma = matrix::Zero(d1 + d2,d1 + d2);
   
   particle_t.post.sigma.block(0,0,d1,d1) = top_left;    
-  particle_t.post.sigma.block(0,d1,d1,d2) = top_right;
-  particle_t.post.sigma.block(d1,0,d2,d1) = bottom_left;
-  particle_t.post.sigma.block(d1,d2,d2,d2) = bottom_right;
+  particle_t.post.sigma.block(0,d1,d1,d2) = top_right.transpose();
+  particle_t.post.sigma.block(d1,0,d2,d1) = bottom_left.transpose();
+  particle_t.post.sigma.block(d1,d1,d2,d2) = bottom_right;
 
   particle_t.post.mu.block(0,0,d1,1) = top;
   particle_t.post.mu.block(d1,0,d2,1) = bottom;
