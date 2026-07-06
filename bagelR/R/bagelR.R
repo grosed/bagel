@@ -147,7 +147,7 @@ setMethod("mus","bagel_type",
 	  })
 
 # sigmas
-setGeneric("sigmas",function(object) standardGeneric("mus"))
+setGeneric("sigmas",function(object) standardGeneric("sigmas"))
 setMethod("sigmas","bagel_type",
           function(object)
 	  {
@@ -155,7 +155,7 @@ setMethod("sigmas","bagel_type",
 	  })
 
 # nus
-setGeneric("nus",function(object) standardGeneric("mus"))
+setGeneric("nus",function(object) standardGeneric("nus"))
 setMethod("nus","bagel_type",
           function(object)
 	  {
@@ -163,7 +163,7 @@ setMethod("nus","bagel_type",
 	  })
 
 # iotas
-setGeneric("iotas",function(object) standardGeneric("mus"))
+setGeneric("iotas",function(object) standardGeneric("iotas"))
 setMethod("iotas","bagel_type",
           function(object)
 	  {
