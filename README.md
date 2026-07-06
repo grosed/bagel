@@ -39,7 +39,7 @@ install_github("grosed/bagel/bagelR",force=TRUE)
     * cleaning src
     * checking for LF line-endings in source and make files and shell scripts
     * checking for empty or unneeded directories
-    * building ‘bagelR_1.5.0.tar.gz’
+    * building ‘bagelR_1.7.0.tar.gz’
 
 
     Installing package into ‘/home/grosed/DASS/R-packages’
