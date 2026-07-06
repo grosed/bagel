@@ -114,6 +114,27 @@ void set_weights(const std::vector<real_type>& weights)
 		   [](auto& particle){return particle.tau;});  
     return ltaus;  
   }
+
+  std::list<matrix> get_mus()
+  {
+    std::list<matrix> values;
+    std::transform(sp_bagel->particles.begin(),
+		   sp_bagel->particles.end(),
+		   std::inserter(values,values.end()),
+		   [](auto& particle){return particle.post.mu;});  
+    return values;  
+  }
+  
+  std::list<matrix> get_sigmas()
+  {
+    std::list<matrix> values;
+    std::transform(sp_bagel->particles.begin(),
+		   sp_bagel->particles.end(),
+		   std::inserter(values,values.end()),
+		   [](auto& particle){return particle.post.sigma;});  
+    return values;  
+  }
+
   
   const matrix& feature_vector_from_R(const int& t,const int& tau)
   { 
@@ -185,14 +206,75 @@ int get_max_num_particles()
   {
     return sp_bagel -> max_num_particles;
   }
-  
+
+  // methods requiring specialisation
+  std::list<double> get_iotas();
+  std::list<double> get_nus();
   
 };
+
 
 typedef bagelR<unknown_variance,KL_divergence_type::exact> bagelR_uv_exact;
 typedef bagelR<known_variance,KL_divergence_type::exact> bagelR_kv_exact;
 typedef bagelR<unknown_variance,KL_divergence_type::approximate> bagelR_uv_approximate;
 typedef bagelR<known_variance,KL_divergence_type::approximate> bagelR_kv_approximate;
+
+
+// specialisation helper
+template<typename bagelR_type>
+std::list<double> get_iotas_helper(const bagelR_type& bagelR_instance)
+{
+  std::list<double> values;
+  std::transform(bagelR_instance.sp_bagel->particles.begin(),
+		 bagelR_instance.sp_bagel->particles.end(),
+		 std::inserter(values,values.end()),
+		 [](auto& particle){return particle.noise_structure.iota;});  
+  return values;  
+}
+
+// specialisation helper
+template<typename bagelR_type>
+std::list<double> get_nus_helper(const bagelR_type& bagelR_instance)
+{
+  std::list<double> values;
+  std::transform(bagelR_instance.sp_bagel->particles.begin(),
+		 bagelR_instance.sp_bagel->particles.end(),
+		 std::inserter(values,values.end()),
+		 [](auto& particle){return particle.noise_structure.nu;});  
+  return values;
+}
+
+
+// specialisations
+template<>
+std::list<double> bagelR_uv_exact::get_iotas()
+{
+  return get_iotas_helper(*this);
+}
+
+// specialisations
+template<>
+std::list<double> bagelR_uv_approximate::get_iotas()
+{
+  return get_iotas_helper(*this);
+}
+
+// specialisations
+template<>
+std::list<double> bagelR_uv_exact::get_nus()
+{
+  return get_nus_helper(*this);
+}
+
+// specialisations
+template<>
+std::list<double> bagelR_uv_approximate::get_nus()
+{
+  return get_nus_helper(*this);
+}
+
+
+
 
 RCPP_MODULE(bagelR) 
 {
@@ -208,6 +290,10 @@ RCPP_MODULE(bagelR)
   .method("update", &bagelR_uv_exact::update)
   .method("get_ratios", &bagelR_uv_exact::get_ratios)
   .method("get_max_num_particles", &bagelR_uv_exact::get_max_num_particles)
+  .method("get_mus", &bagelR_uv_exact::get_mus)
+  .method("get_sigmas", &bagelR_uv_exact::get_sigmas)
+  .method("get_iotas", &bagelR_uv_exact::get_iotas)
+  .method("get_nus", &bagelR_uv_exact::get_nus)
 ;
   class_<bagelR_uv_approximate>("bagelR_uv_approximate")
   .constructor<probability_type,probability_type,real_type,real_type,int>()
@@ -221,6 +307,10 @@ RCPP_MODULE(bagelR)
   .method("update", &bagelR_uv_approximate::update)
   .method("get_ratios", &bagelR_uv_approximate::get_ratios)
   .method("get_max_num_particles", &bagelR_uv_approximate::get_max_num_particles)
+  .method("get_mus", &bagelR_uv_approximate::get_mus)
+  .method("get_sigmas", &bagelR_uv_approximate::get_sigmas)
+  .method("get_iotas", &bagelR_uv_approximate::get_iotas)
+  .method("get_nus", &bagelR_uv_approximate::get_nus)
 ;
 
 
@@ -237,6 +327,8 @@ RCPP_MODULE(bagelR)
   .method("update", &bagelR_kv_exact::update)
   .method("get_ratios", &bagelR_kv_exact::get_ratios)
   .method("get_max_num_particles", &bagelR_kv_exact::get_max_num_particles)
+  .method("get_mus", &bagelR_kv_exact::get_mus)
+  .method("get_sigmas", &bagelR_kv_exact::get_sigmas)
 ;
   class_<bagelR_kv_approximate>("bagelR_kv_approximate")
   .constructor<probability_type,probability_type,real_type,int>()
@@ -250,6 +342,8 @@ RCPP_MODULE(bagelR)
   .method("update", &bagelR_kv_approximate::update)
   .method("get_ratios", &bagelR_kv_approximate::get_ratios)
   .method("get_max_num_particles", &bagelR_kv_approximate::get_max_num_particles)
+  .method("get_mus", &bagelR_kv_approximate::get_mus)
+  .method("get_sigmas", &bagelR_kv_approximate::get_sigmas)
 ;
 
 }
