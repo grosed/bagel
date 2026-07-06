@@ -54,7 +54,7 @@ install_github("grosed/bagel/bagelR",force=TRUE)
 packageVersion("bagelR")
 ```
 
-[1] ‘1.5.0’
+[1] ‘1.7.0’
 
 
 ## Using bagelR
