@@ -154,20 +154,36 @@ setMethod("sigmas","bagel_type",
 	    return(object@bagel_object$get_sigmas())
 	  })
 
-# nus
-setGeneric("nus",function(object) standardGeneric("nus"))
-setMethod("nus","bagel_type",
+# nu
+setGeneric("nu",function(object) standardGeneric("nu"))
+setMethod("nu","bagel_uv_exact_type",
           function(object)
 	  {
-	    return(object@bagel_object$get_nus())
+	    return(object@bagel_object$get_nus()[[1]])
 	  })
 
-# iotas
-setGeneric("iotas",function(object) standardGeneric("iotas"))
-setMethod("iotas","bagel_type",
+# nu
+setGeneric("nu",function(object) standardGeneric("nu"))
+setMethod("nu","bagel_uv_approximate_type",
           function(object)
 	  {
-	    return(object@bagel_object$get_iotas())
+	    return(object@bagel_object$get_nus()[[1]])
+	  })
+
+# iota
+setGeneric("iota",function(object) standardGeneric("iota"))
+setMethod("iota","bagel_uv_exact_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_iotas()[[1]])
+	  })
+
+# iota
+setGeneric("iota",function(object) standardGeneric("iota"))
+setMethod("iota","bagel_uv_approximate_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_iotas()[[1]])
 	  })
 
 
