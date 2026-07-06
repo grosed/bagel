@@ -138,6 +138,37 @@ setMethod("max_particles","bagel_type",
 	  })
 
 
+# mus
+setGeneric("mus",function(object) standardGeneric("mus"))
+setMethod("mus","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_mus())
+	  })
+
+# sigmas
+setGeneric("sigmas",function(object) standardGeneric("mus"))
+setMethod("sigmas","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_sigmas())
+	  })
+
+# nus
+setGeneric("nus",function(object) standardGeneric("mus"))
+setMethod("nus","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_nus())
+	  })
+
+# iotas
+setGeneric("iotas",function(object) standardGeneric("mus"))
+setMethod("iotas","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_iotas())
+	  })
 
 
 
