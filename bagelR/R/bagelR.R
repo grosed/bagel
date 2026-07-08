@@ -220,7 +220,11 @@ bagel_result <- function(y,
 }
 
 
-
+## default tracer
+nothing <- function(trace,bagel_object) 
+{ 
+    return(trace)
+}
 
 
 
@@ -237,7 +241,7 @@ setClass("bagel_uv_approximate_type", slots=list(feature_vector = "function",
 				                 bagel_object = "ANY"),
 						 contains="bagel_type")
 
-bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer)
+bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer = nothing)
 {
 
    bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
@@ -266,7 +270,7 @@ setClass("bagel_uv_exact_type", slots=list(feature_vector = "function",
 				           bagel_object = "ANY"),
 					   contains="bagel_type")
 
-bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer)
+bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer = nothing)
 {
 
    bagel_object <- new("bagel_uv_exact_type",feature_vector=feature_vector,
@@ -295,7 +299,7 @@ setClass("bagel_kv_approximate_type", slots=list(feature_vector = "function",
 				                 bagel_object = "ANY"),
 						 contains="bagel_type")
 
-bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer)
+bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing)
 {
 
    bagel_object <- new("bagel_kv_approximate_type",feature_vector=feature_vector,
@@ -323,7 +327,7 @@ setClass("bagel_kv_exact_type", slots=list(feature_vector = "function",
 				           bagel_object = "ANY"),
 					   contains="bagel_type")
 
-bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer)
+bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing)
 {
 
    bagel_object <- new("bagel_kv_exact_type",feature_vector=feature_vector,
