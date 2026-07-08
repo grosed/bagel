@@ -195,7 +195,8 @@ setClass("bagel_result_type", slots=list(y = "numeric",
 					 weights="numeric",
 					 ratios="list",
 					 taus = "numeric",
-					 t="numeric"))
+					 t="numeric",
+					 trace="list"))
 
 bagel_result <- function(y,
                          threshold,
@@ -204,7 +205,8 @@ bagel_result <- function(y,
 			 weights,
 			 ratios,
 			 taus,
-			 t)
+			 t,
+			 trace)
 {
 	return(new("bagel_result_type",y=y,
 	                               threshold=threshold,
@@ -213,7 +215,8 @@ bagel_result <- function(y,
 				       weights=weights,
 				       ratios=ratios,
 				       taus=taus,
-				       t=t))
+				       t=t,
+				       trace=trace))
 }
 
 
@@ -230,10 +233,11 @@ setClass("bagel_uv_approximate_type", slots=list(feature_vector = "function",
 				                 nu = "numeric",
 	                                         iota = "numeric",	
 				                 max_particles = "numeric",
-				                 bagel_object = "ANY"),
+				                 bagel_object = "ANY",
+						 tracer = "function"),
 						 contains="bagel_type")
 
-bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold)
+bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer)
 {
 
    bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
@@ -244,6 +248,7 @@ bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,m
 			                  	   nu=nu,
 			                  	   iota=iota,
 			                  	   max_particles=max_particles,
+						   tracer=tracer,
 			                  	   bagel_object=new(bagelR_uv_approximate,p0,p,nu,iota,max_particles))
   return(analyse(Y,threshold,bagel_object))
 
@@ -257,7 +262,8 @@ setClass("bagel_uv_exact_type", slots=list(feature_vector = "function",
 				           nu = "numeric",
 	                                   iota = "numeric",	
 				           max_particles = "numeric",
-				           bagel_object = "ANY"),
+				           bagel_object = "ANY",
+					   tracer = "function"),
 					   contains="bagel_type")
 
 bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold)
@@ -271,6 +277,7 @@ bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_par
 			                     nu=nu,
 			                     iota=iota,
 			                     max_particles=max_particles,
+					     tracer=tracer,
 			                     bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles))
   return(analyse(Y,threshold,bagel_object))
 }
@@ -284,7 +291,8 @@ setClass("bagel_kv_approximate_type", slots=list(feature_vector = "function",
 				                 p = "numeric",
 				                 sigma = "numeric",
 				                 max_particles = "numeric",
-				                 bagel_object = "ANY"),
+				                 bagel_object = "ANY",
+						 tracer = "function"),
 						 contains="bagel_type")
 
 bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold)
@@ -297,6 +305,7 @@ bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max
 			                  	   p=p,
 			                  	   sigma=sigma,
 			                  	   max_particles=max_particles,
+						   tracer=tracer,
 			                  	   bagel_object=new(bagelR_kv_approximate,p0,p,sigma,max_particles))
   return(analyse(Y,threshold,bagel_object))
 
@@ -310,7 +319,8 @@ setClass("bagel_kv_exact_type", slots=list(feature_vector = "function",
 				           p = "numeric",
 				           sigma = "numeric",
 				           max_particles = "numeric",
-				           bagel_object = "ANY"),
+				           bagel_object = "ANY",
+					   tracer = "function"),
 					   contains="bagel_type")
 
 bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold)
@@ -323,6 +333,7 @@ bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_parti
 			                     p=p,
 			                     sigma=sigma,
 			                     max_particles=max_particles,
+					     tracer=tracer,
 			                     bagel_object=new(bagelR_kv_exact,p0,p,sigma,max_particles))
   return(analyse(Y,threshold,bagel_object))
 
@@ -334,11 +345,13 @@ bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_parti
 
 analyse <- function(Y,threshold,bagel_object)
 {
+   trace = list()
    w0ts <- list()
    for(y in Y)
    {
       w0t <- update(bagel_object,y)
       w0ts <- append(w0ts,w0t)
+      trace <- bagel_object@tracer(trace,bagel_object)
       if(1.0 - w0t > threshold)
       {
 	break
@@ -351,7 +364,8 @@ analyse <- function(Y,threshold,bagel_object)
                        as.numeric(bagel_object@bagel_object$get_weights()),
 		       bagel_object@bagel_object$get_ratios(),
 		       as.numeric(bagel_object@bagel_object$get_taus()),	
-                       bagel_object@bagel_object$get_time())
+                       bagel_object@bagel_object$get_time(),
+		       trace)
   return(results)
 	
 }
