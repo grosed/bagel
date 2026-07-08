@@ -39,7 +39,7 @@ install_github("grosed/bagel/bagelR",force=TRUE)
     * cleaning src
     * checking for LF line-endings in source and make files and shell scripts
     * checking for empty or unneeded directories
-    * building ‘bagelR_1.7.0.tar.gz’
+    * building ‘bagelR_1.8.0.tar.gz’
 
 
     Installing package into ‘/home/grosed/DASS/R-packages’
@@ -54,10 +54,10 @@ install_github("grosed/bagel/bagelR",force=TRUE)
 packageVersion("bagelR")
 ```
 
-[1] ‘1.7.0’
+[1] ‘1.8.0’
 
 
 ## Using bagelR
 
-See [here](https://github.com/grosed/bagel/blob/v-1.7.0/notebooks/examples.ipynb) for details of and examples showing how to use **bagelR**.
+See [here](https://github.com/grosed/bagel/blob/v-1.8.0/notebooks/examples.ipynb) for details of and examples showing how to use **bagelR**.
 
