@@ -233,8 +233,8 @@ setClass("bagel_uv_approximate_type", slots=list(feature_vector = "function",
 				                 nu = "numeric",
 	                                         iota = "numeric",	
 				                 max_particles = "numeric",
-				                 bagel_object = "ANY",
-						 tracer = "function"),
+						 tracer = "function",
+				                 bagel_object = "ANY"),
 						 contains="bagel_type")
 
 bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer)
@@ -262,8 +262,8 @@ setClass("bagel_uv_exact_type", slots=list(feature_vector = "function",
 				           nu = "numeric",
 	                                   iota = "numeric",	
 				           max_particles = "numeric",
-				           bagel_object = "ANY",
-					   tracer = "function"),
+					   tracer = "function",
+				           bagel_object = "ANY"),
 					   contains="bagel_type")
 
 bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer)
@@ -291,8 +291,8 @@ setClass("bagel_kv_approximate_type", slots=list(feature_vector = "function",
 				                 p = "numeric",
 				                 sigma = "numeric",
 				                 max_particles = "numeric",
-				                 bagel_object = "ANY",
-						 tracer = "function"),
+						 tracer = "function",
+				                 bagel_object = "ANY"),
 						 contains="bagel_type")
 
 bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer)
@@ -319,8 +319,8 @@ setClass("bagel_kv_exact_type", slots=list(feature_vector = "function",
 				           p = "numeric",
 				           sigma = "numeric",
 				           max_particles = "numeric",
-				           bagel_object = "ANY",
-					   tracer = "function"),
+					   tracer = "function",	
+				           bagel_object = "ANY"),
 					   contains="bagel_type")
 
 bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer)
