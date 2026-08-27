@@ -23,6 +23,46 @@ std::tuple<matrix,matrix> transform(const T& a)
   return std::make_tuple(mu,sigma);
 }
 
+// KL divergence between two Gaussians N(mu_i, sigma^2 Sig_i) and N(mu_j, sigma^2 Sig_j)
+// (Theorem 5). Shared by the known-variance 'approximate' branch and the
+// multivariate fall-back of the 'exact' branch so they are bit-for-bit identical.
+inline double gaussian_kl(const matrix& mu_i, const matrix& Sig_i,
+                          const matrix& mu_j, const matrix& Sig_j,
+                          const real_type& sigma)
+{
+  matrix I = matrix::Identity(Sig_i.rows(), Sig_i.cols());
+  matrix Sig_j_inv = Sig_j.inverse();          // once; was recomputed on the next line
+  double result = (Sig_j_inv * Sig_i - I).trace();
+  result = result + (1.0/(sigma*sigma)) * ((mu_j - mu_i).transpose() * Sig_j_inv * (mu_j - mu_i))(0,0);
+  // log det(Sig_i^-1 Sig_j) == log det(Sig_j) - log det(Sig_i), since
+  // det(AB) = det(A) det(B) and det(A^-1) = 1/det(A). Computing it this way
+  // avoids a matrix inversion and a matrix-matrix product.
+  result = result + std::log(Sig_j.determinant()) - std::log(Sig_i.determinant());
+  return 0.5*result;
+}
+
+// KL divergence between two Normal-Inverse-Gamma distributions (Theorem 6).
+// Used for the unknown-variance case for BOTH the 'exact' and 'approximate'
+// selectors -- there is no closed-form total variation for NIG, so unknown
+// variance always uses this KL bound.
+inline double nig_kl(const matrix& mu_i, const matrix& Sig_i, const real_type& nu_i, const real_type& iota_i,
+                     const matrix& mu_j, const matrix& Sig_j, const real_type& nu_j, const real_type& iota_j)
+{
+  matrix I = matrix::Identity(Sig_i.rows(), Sig_i.cols());
+  matrix Sig_j_inv = Sig_j.inverse();          // once; was recomputed on the next line
+  double result = (Sig_j_inv * Sig_i - I).trace();
+  result = result + (nu_i/iota_i) * ((mu_j - mu_i).transpose() * Sig_j_inv * (mu_j - mu_i))(0,0);
+  // -log(det(Sig_i)/det(Sig_j)) == log det(Sig_j) - log det(Sig_i); same value,
+  // written as a difference of logs (matches gaussian_kl and is more robust).
+  result = result + std::log(Sig_j.determinant()) - std::log(Sig_i.determinant());
+  result = 0.5*result;
+  result = result + nu_j * std::log(iota_i/iota_j);
+  result = result - (std::lgamma(nu_i) - std::lgamma(nu_j));
+  result = result + (nu_i - nu_j)*boost::math::digamma(nu_i);
+  result = result - (iota_i - iota_j)*(nu_i/iota_i);
+  return result;
+}
+
 
 
 
@@ -31,29 +71,52 @@ template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<known_variance,KL_divergence_type::exact> >; }
 {
-  std::tuple<matrix,matrix> transformed = transform(a);
-  real_type mu_i = std::get<0>(transformed)(0,0);
-  real_type sigma_i = std::get<1>(transformed)(0,0);
-  transformed = transform(b);
-  real_type mu_i_plus_1 = std::get<0>(transformed)(0,0);
-  real_type sigma_i_plus_1 = std::get<1>(transformed)(0,0);
-  real_type sigma = a.noise_structure.sigma;
+  // Merge criterion for the post-change parameter theta (known noise variance):
+  //   * theta is 1-D  -> EXACT total variation (Proposition 1 / Corollary 1)
+  //   * theta is >1-D -> no closed-form TV exists, so fall back to the KL
+  //                      (Pinsker) bound (Theorem 5), as in the 'approximate' branch.
+  // The dimension of theta is the number of rows of the transformed mean.
+  std::tuple<matrix,matrix> ta = transform(a);
+  std::tuple<matrix,matrix> tb = transform(b);
+  matrix mu_i  = std::get<0>(ta);
+  matrix Sig_i = std::get<1>(ta);          // scaled covariance of theta
+  matrix mu_j  = std::get<0>(tb);
+  matrix Sig_j = std::get<1>(tb);
+  real_type sigma = a.noise_structure.sigma;   // known noise sd
 
-
-  real_type aa = (mu_i - mu_i_plus_1) / (sigma*sigma*(sigma_i_plus_1*sigma_i_plus_1 - sigma_i_plus_1*sigma_i_plus_1));
-  real_type bb = std::log(sigma_i_plus_1*sigma_i_plus_1/sigma_i_plus_1*sigma_i_plus_1);
-  bb = sigma*sigma*(sigma_i_plus_1*sigma_i_plus_1 - sigma_i_plus_1*sigma_i_plus_1) * bb;
-  bb = std::sqrt((mu_i - mu_i_plus_1)*(mu_i - mu_i_plus_1) + bb);
-  bb = bb / sigma*sigma*(sigma_i_plus_1*sigma_i_plus_1 - sigma_i_plus_1*sigma_i_plus_1);
-
-
-  real_type result = normal_cdf(aa*sigma*sigma_i + bb*sigma*sigma_i_plus_1);
-  result = result -  normal_cdf(aa*sigma*sigma_i - bb*sigma*sigma_i_plus_1);
-  result = result +  normal_cdf(aa*sigma*sigma_i_plus_1 - bb*sigma*sigma_i);
-  result = result -  normal_cdf(aa*sigma*sigma_i_plus_1 + bb*sigma*sigma_i);
-  result = 2.0*result;
+  real_type result;
+  if(mu_i.rows() == 1)
+    {
+      // ----- exact 1-D total variation -----
+      real_type m_i = mu_i(0,0), m_j = mu_j(0,0);
+      real_type V_i = sigma*sigma*Sig_i(0,0);   // actual variance = noise var * scaled cov
+      real_type V_j = sigma*sigma*Sig_j(0,0);
+      if(std::abs(V_j - V_i) < 1e-12)
+        {
+          // equal-variance closed form: TV = 2 Phi(|dmu|/(2 sqrt(V))) - 1
+          real_type s = std::sqrt(0.5*(V_i + V_j));
+          result = 2.0*normal_cdf(std::abs(m_i - m_j)/(2.0*s)) - 1.0;
+        }
+      else
+        {
+          // the two densities intersect at c1 < c2
+          real_type aa = m_i*V_j - m_j*V_i;
+          real_type bb = std::sqrt(V_i*V_j) *
+                         std::sqrt((m_i - m_j)*(m_i - m_j) + (V_j - V_i)*std::log(V_j/V_i));
+          real_type c1 = (aa - bb)/(V_j - V_i);
+          real_type c2 = (aa + bb)/(V_j - V_i);
+          if(c1 > c2){ real_type tmp = c1; c1 = c2; c2 = tmp; }
+          result =  normal_cdf((c2 - m_i)/std::sqrt(V_i)) - normal_cdf((c1 - m_i)/std::sqrt(V_i))
+                  + normal_cdf((c1 - m_j)/std::sqrt(V_j)) - normal_cdf((c2 - m_j)/std::sqrt(V_j));
+        }
+    }
+  else
+    {
+      // ----- multivariate fall-back: KL divergence (Theorem 5), shared helper -----
+      result = std::sqrt(0.5 * gaussian_kl(mu_i, Sig_i, mu_j, Sig_j, sigma));
+    }
   return a.weight*result;
-  
+
 }
 // ******************************************************************************
 
@@ -68,16 +131,13 @@ requires requires { requires std::same_as<T,particle_type<known_variance,KL_dive
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
   double sigma = a.noise_structure.sigma;
-  matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
-  double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
-  result = result + (1/sigma*sigma) * ((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
-  result = result + std::log((sigma_i.inverse() * sigma_i_plus_1).determinant());
-  result = 0.5*result;
-  return a.weight*result;
+  return a.weight * std::sqrt(0.5 * gaussian_kl(mu_i, sigma_i, mu_i_plus_1, sigma_i_plus_1, sigma));
 }
 
 // ******************************************************************************
-// TEMPORARILY COPY approximate method into exact method for
+// Unknown variance: NIG KL bound (Theorem 6) for BOTH selectors. There is no
+// closed-form total variation for the Normal-Inverse-Gamma posterior, so the
+// 'exact' and 'approximate' branches are identical (both use the KL bound).
 template <typename T>
 double total_variation(const T& a,const T& b)
 requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_divergence_type::exact> >; }
@@ -88,21 +148,8 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
   transformed = transform(b);
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
-  
-  double nu_i = a.noise_structure.nu;
-  double nu_i_plus_1 = b.noise_structure.nu;
-  double iota_i = a.noise_structure.iota;
-  double iota_i_plus_1 = b.noise_structure.iota;
-  matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
-  double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
-
-  result = result + (nu_i/iota_i)*((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
-  result = result + std::log((sigma_i_plus_1.inverse() * sigma_i).determinant());
-  result = result + nu_i_plus_1 * std::log(iota_i/iota_i_plus_1);
-  result = result - std::log(boost::math::tgamma(nu_i)/boost::math::tgamma(nu_i_plus_1));
-  result = result + (nu_i - nu_i_plus_1)*boost::math::digamma(nu_i);
-  result = result - (iota_i - iota_i_plus_1)*(nu_i/iota_i);
-  return a.weight*result;
+  return a.weight * std::sqrt(0.5 * nig_kl(mu_i, sigma_i, a.noise_structure.nu, a.noise_structure.iota,
+                           mu_i_plus_1, sigma_i_plus_1, b.noise_structure.nu, b.noise_structure.iota));
 }
 // ******************************************************************************
 
@@ -117,20 +164,8 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
   transformed = transform(b);
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
-  double nu_i = a.noise_structure.nu;
-  double nu_i_plus_1 = b.noise_structure.nu;
-  double iota_i = a.noise_structure.iota;
-  double iota_i_plus_1 = b.noise_structure.iota;
-  matrix I = matrix::Identity(sigma_i.rows(),sigma_i.cols());
-  double result = (sigma_i_plus_1.inverse() * sigma_i - I).trace();
-  result = result + (nu_i/iota_i)*((mu_i_plus_1 - mu_i).transpose() * sigma_i_plus_1.inverse() * (mu_i_plus_1 - mu_i))(0,0);
-  result = result - std::log(sigma_i.determinant()/sigma_i_plus_1.determinant());
-  result = 0.5*result; 
-  result = result + nu_i_plus_1 * std::log(iota_i/iota_i_plus_1);
-  result = result - (std::lgamma(nu_i) - std::lgamma(nu_i_plus_1));
-  result = result + (nu_i - nu_i_plus_1)*boost::math::digamma(nu_i);
-  result = result - (iota_i - iota_i_plus_1)*(nu_i/iota_i);
-  return a.weight*result;
+  return a.weight * std::sqrt(0.5 * nig_kl(mu_i, sigma_i, a.noise_structure.nu, a.noise_structure.iota,
+                           mu_i_plus_1, sigma_i_plus_1, b.noise_structure.nu, b.noise_structure.iota));
 }
 
 
@@ -167,19 +202,22 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
       it_second_cp++;
 
       auto it_newest = particles.end();
-      it_newest--;    // newest particle, should be protected
+      it_newest--;    // the candidate introduced at this iteration (tau = t-1)
 
-      auto it_last_old_cp = it_newest;
-      it_last_old_cp--;  // last changepoint particle before newest
-
-      // Compare only old adjacent changepoint particles:
-      // (first_cp, second_cp), ..., (..., last_old_cp)
-      // Exclude newest from both left and right side.
+      // Compare EVERY adjacent pair of changepoint particles, including the
+      // pair whose right-hand element is the newly introduced candidate:
+      //   (first_cp, second_cp), ..., (second_newest, newest)
+      // std::transform pairs [it_first_cp, it_newest) with [it_second_cp, ...),
+      // so the LEFT element ranges over every changepoint particle except the
+      // newest.  The newest can therefore ABSORB its predecessor but is never
+      // itself evicted -- prune always removes the left element of the chosen
+      // pair and relocates its weight to the right neighbour.  The tau = 0
+      // particle is never a merge candidate.
       std::list<double> total_variations;
 
       std::transform(
         it_first_cp,
-        it_last_old_cp,
+        it_newest,
         it_second_cp,
         std::back_inserter(total_variations),
         [](auto& a, auto& b) {

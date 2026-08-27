@@ -18,7 +18,7 @@ sequential_bagel_kv_exact <- function(feature_vector,prior,transform,p0,p,sigma,
 
 sequential_bagel_uv_exact <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles)
 {
-   bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
+   bagel_object <- new("bagel_uv_exact_type",feature_vector=feature_vector,
 						   prior=prior,
 			                  	   transform=transform,
 			                  	   p0=p0,
@@ -27,13 +27,13 @@ sequential_bagel_uv_exact <- function(feature_vector,prior,transform,p0,p,nu,iot
 			                  	   iota=iota,
 			                  	   max_particles=max_particles,
 			                  	   bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles))
-  return(bagel_object)				   
+  return(bagel_object)
 }
 
 
 sequential_bagel_kv_approximate <- function(feature_vector,prior,transform,p0,p,sigma,max_particles)
 {
-   bagel_object <- new("bagel_kv_exact_type",feature_vector=feature_vector,
+   bagel_object <- new("bagel_kv_approximate_type",feature_vector=feature_vector,
 				             prior=prior,
 			                     transform=transform,
 			                     p0=p0,
@@ -88,6 +88,15 @@ setMethod("active_weights","bagel_type",
           function(object)
 	  {
         return(object@bagel_object$get_weights())
+	  })
+
+# active_posteriors
+# The returned list has the same order and length as active_weights().
+setGeneric("active_posteriors",function(object) standardGeneric("active_posteriors"))
+setMethod("active_posteriors","bagel_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_posteriors())
 	  })
 
 
@@ -154,45 +163,12 @@ setMethod("sigmas","bagel_type",
 	    return(object@bagel_object$get_sigmas())
 	  })
 
-# nu
-setGeneric("nu",function(object) standardGeneric("nu"))
-setMethod("nu","bagel_uv_exact_type",
-          function(object)
-	  {
-	    return(object@bagel_object$get_nus()[[1]])
-	  })
-
-# nu
-setGeneric("nu",function(object) standardGeneric("nu"))
-setMethod("nu","bagel_uv_approximate_type",
-          function(object)
-	  {
-	    return(object@bagel_object$get_nus()[[1]])
-	  })
-
-# iota
-setGeneric("iota",function(object) standardGeneric("iota"))
-setMethod("iota","bagel_uv_exact_type",
-          function(object)
-	  {
-	    return(object@bagel_object$get_iotas()[[1]])
-	  })
-
-# iota
-setGeneric("iota",function(object) standardGeneric("iota"))
-setMethod("iota","bagel_uv_approximate_type",
-          function(object)
-	  {
-	    return(object@bagel_object$get_iotas()[[1]])
-	  })
-
-
-
 setClass("bagel_result_type", slots=list(y = "numeric",
                                          threshold = "numeric",
 					 max_particles = "numeric",
                                          w0ts = "numeric",
 					 weights="numeric",
+					 posteriors="list",
 					 ratios="list",
 					 taus = "numeric",
 					 t="numeric",
@@ -203,6 +179,7 @@ bagel_result <- function(y,
 			 max_particles,
                          w0ts,
 			 weights,
+			 posteriors,
 			 ratios,
 			 taus,
 			 t,
@@ -213,6 +190,7 @@ bagel_result <- function(y,
 				       max_particles=max_particles,
 	                               w0ts=w0ts,
 				       weights=weights,
+				       posteriors=posteriors,
 				       ratios=ratios,
 				       taus=taus,
 				       t=t,
@@ -324,8 +302,32 @@ setClass("bagel_kv_exact_type", slots=list(feature_vector = "function",
 				           sigma = "numeric",
 				           max_particles = "numeric",
 					   tracer = "function",	
-				           bagel_object = "ANY"),
+					   bagel_object = "ANY"),
 					   contains="bagel_type")
+
+setGeneric("nu",function(object) standardGeneric("nu"))
+setMethod("nu","bagel_uv_exact_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_nus()[[1]])
+	  })
+setMethod("nu","bagel_uv_approximate_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_nus()[[1]])
+	  })
+
+setGeneric("iota",function(object) standardGeneric("iota"))
+setMethod("iota","bagel_uv_exact_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_iotas()[[1]])
+	  })
+setMethod("iota","bagel_uv_approximate_type",
+          function(object)
+	  {
+	    return(object@bagel_object$get_iotas()[[1]])
+	  })
 
 bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing)
 {
@@ -366,6 +368,7 @@ analyse <- function(Y,threshold,bagel_object)
 		       bagel_object@bagel_object$get_max_num_particles(),
                        as.numeric(w0ts),
                        as.numeric(bagel_object@bagel_object$get_weights()),
+		       bagel_object@bagel_object$get_posteriors(),
 		       bagel_object@bagel_object$get_ratios(),
 		       as.numeric(bagel_object@bagel_object$get_taus()),	
                        bagel_object@bagel_object$get_time(),
@@ -393,8 +396,7 @@ update <- function(object,y)
 	transform <- object@transform
 	taus <- bagel_object$get_taus()
 	t <- bagel_object$get_time()
-	tt <- seq(0,t+1,1)
-	taus <- c(taus,t-1)	
+	taus <- c(taus,t-1)
 	bagel_object$set_feature_vectors(taus,Map(function(tau) return(feature_vector(t,tau)),taus))
 	ts <- c(1,taus[-1],t)
 	priors <- Map(prior,ts)
@@ -422,6 +424,14 @@ setMethod("active_weights","bagel_result_type",
           function(object)
 	  {
 	    return(object@weights)
+	  })
+
+# active_posteriors
+# The returned list has the same order and length as active_weights().
+setMethod("active_posteriors","bagel_result_type",
+          function(object)
+	  {
+	    return(object@posteriors)
 	  })
 
 
@@ -483,6 +493,4 @@ setMethod("changepoint","bagel_result_type",
 	    }
 	    return(NA)
 	  })
-
-
 
