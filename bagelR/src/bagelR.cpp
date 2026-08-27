@@ -98,6 +98,27 @@ void set_weights(const std::vector<real_type>& weights)
 		   [](auto& particle){return particle.weight;});  
     return lweights;  
   }
+
+  Rcpp::List get_posteriors()
+  {
+    Rcpp::List posteriors;
+    for(const auto& particle : sp_bagel->particles)
+      {
+        Rcpp::List posterior = Rcpp::List::create(
+          Rcpp::Named("tau") = particle.tau,
+          Rcpp::Named("weight") = particle.weight,
+          Rcpp::Named("mu") = particle.post.mu,
+          Rcpp::Named("sigma") = particle.post.sigma
+        );
+        if constexpr(std::same_as<noise,unknown_variance>)
+          {
+            posterior["nu"] = particle.noise_structure.nu;
+            posterior["iota"] = particle.noise_structure.iota;
+          }
+        posteriors.push_back(posterior);
+      }
+    return posteriors;
+  }
   
   double get_time()
   {
@@ -283,6 +304,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_uv_exact::get_time)
   .method("get_taus", &bagelR_uv_exact::get_taus)
   .method("get_weights", &bagelR_uv_exact::get_weights)
+  .method("get_posteriors", &bagelR_uv_exact::get_posteriors)
   .method("set_weights", &bagelR_uv_exact::set_weights)
   .method("set_feature_vectors", &bagelR_uv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_uv_exact::set_priors)
@@ -300,6 +322,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_uv_approximate::get_time)
   .method("get_taus", &bagelR_uv_approximate::get_taus)
   .method("get_weights", &bagelR_uv_approximate::get_weights)
+  .method("get_posteriors", &bagelR_uv_approximate::get_posteriors)
   .method("set_weights", &bagelR_uv_approximate::set_weights)
   .method("set_feature_vectors", &bagelR_uv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_uv_approximate::set_priors)
@@ -320,6 +343,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_kv_exact::get_time)
   .method("get_taus", &bagelR_kv_exact::get_taus)
   .method("get_weights", &bagelR_kv_exact::get_weights)
+  .method("get_posteriors", &bagelR_kv_exact::get_posteriors)
   .method("set_weights", &bagelR_kv_exact::set_weights)
   .method("set_feature_vectors", &bagelR_kv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_kv_exact::set_priors)
@@ -335,6 +359,7 @@ RCPP_MODULE(bagelR)
   .method("get_time", &bagelR_kv_approximate::get_time)
   .method("get_taus", &bagelR_kv_approximate::get_taus)
   .method("get_weights", &bagelR_kv_approximate::get_weights)
+  .method("get_posteriors", &bagelR_kv_approximate::get_posteriors)
   .method("set_weights", &bagelR_kv_approximate::set_weights)
   .method("set_feature_vectors", &bagelR_kv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_kv_approximate::set_priors)
