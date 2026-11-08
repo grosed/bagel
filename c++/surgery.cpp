@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
   real_type s = std::get<2>(command_line_args);
   int n = std::get<3>(command_line_args);
   real_type t = std::get<4>(command_line_args);
+  real_type log_threshold = t >= 1.0 ? std::numeric_limits<real_type>::infinity() : -std::log1p(-t);
 
   
   // set up noise models
@@ -75,7 +76,7 @@ int main(int argc, char* argv[])
 	bagel = update(bagel,y);
 	std::cout << weight_0_t(bagel) << std::endl;
 	// test for threshold
-	if(1.0 - weight_0_t(bagel) > t)
+	if(-log_weight_0_t(bagel) > log_threshold)
 	  {
 	    // report prediction
 	    std::cout << std::endl;

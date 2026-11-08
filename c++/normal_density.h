@@ -6,6 +6,7 @@
 #include "real_type.h"
 
 real_type normal_density(const real_type&,const real_type&,const real_type&);
+real_type log_normal_density(const real_type&,const real_type&,const real_type&);
 
 
 #endif

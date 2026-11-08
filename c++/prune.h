@@ -10,6 +10,15 @@
 #include <boost/math/special_functions/digamma.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 #include <cmath>
+#include <limits>
+
+inline real_type log_add_exp(const real_type& a, const real_type& b)
+{
+  if(a == -std::numeric_limits<real_type>::infinity()) return b;
+  if(b == -std::numeric_limits<real_type>::infinity()) return a;
+  const real_type maximum = std::max(a, b);
+  return maximum + std::log1p(std::exp(std::min(a, b) - maximum));
+}
 
 template <typename T>
 std::tuple<matrix,matrix> transform(const T& a)
@@ -106,8 +115,8 @@ requires requires { requires std::same_as<T,particle_type<known_variance,KL_dive
           real_type c1 = (aa - bb)/(V_j - V_i);
           real_type c2 = (aa + bb)/(V_j - V_i);
           if(c1 > c2){ real_type tmp = c1; c1 = c2; c2 = tmp; }
-          result =  normal_cdf((c2 - m_i)/std::sqrt(V_i)) - normal_cdf((c1 - m_i)/std::sqrt(V_i))
-                  + normal_cdf((c1 - m_j)/std::sqrt(V_j)) - normal_cdf((c2 - m_j)/std::sqrt(V_j));
+          result = std::abs(normal_cdf((c2 - m_i)/std::sqrt(V_i)) - normal_cdf((c1 - m_i)/std::sqrt(V_i))
+                  + normal_cdf((c1 - m_j)/std::sqrt(V_j)) - normal_cdf((c2 - m_j)/std::sqrt(V_j)));
         }
     }
   else
@@ -115,7 +124,7 @@ requires requires { requires std::same_as<T,particle_type<known_variance,KL_dive
       // ----- multivariate fall-back: KL divergence (Theorem 5), shared helper -----
       result = std::sqrt(0.5 * gaussian_kl(mu_i, Sig_i, mu_j, Sig_j, sigma));
     }
-  return a.weight*result;
+  return std::exp(a.log_weight)*result;
 
 }
 // ******************************************************************************
@@ -131,7 +140,7 @@ requires requires { requires std::same_as<T,particle_type<known_variance,KL_dive
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
   double sigma = a.noise_structure.sigma;
-  return a.weight * std::sqrt(0.5 * gaussian_kl(mu_i, sigma_i, mu_i_plus_1, sigma_i_plus_1, sigma));
+  return std::exp(a.log_weight) * std::sqrt(0.5 * gaussian_kl(mu_i, sigma_i, mu_i_plus_1, sigma_i_plus_1, sigma));
 }
 
 // ******************************************************************************
@@ -148,7 +157,7 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
   transformed = transform(b);
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
-  return a.weight * std::sqrt(0.5 * nig_kl(mu_i, sigma_i, a.noise_structure.nu, a.noise_structure.iota,
+  return std::exp(a.log_weight) * std::sqrt(0.5 * nig_kl(mu_i, sigma_i, a.noise_structure.nu, a.noise_structure.iota,
                            mu_i_plus_1, sigma_i_plus_1, b.noise_structure.nu, b.noise_structure.iota));
 }
 // ******************************************************************************
@@ -164,7 +173,7 @@ requires requires { requires std::same_as<T,particle_type<unknown_variance,KL_di
   transformed = transform(b);
   matrix mu_i_plus_1 = std::get<0>(transformed);
   matrix sigma_i_plus_1 = std::get<1>(transformed);
-  return a.weight * std::sqrt(0.5 * nig_kl(mu_i, sigma_i, a.noise_structure.nu, a.noise_structure.iota,
+  return std::exp(a.log_weight) * std::sqrt(0.5 * nig_kl(mu_i, sigma_i, a.noise_structure.nu, a.noise_structure.iota,
                            mu_i_plus_1, sigma_i_plus_1, b.noise_structure.nu, b.noise_structure.iota));
 }
 
@@ -248,21 +257,25 @@ std::list<particle_type<noise,KL_divergence> >& prune(std::list<particle_type<no
       */
       
       // update ratios
-      auto combined_weight = it_relocation -> weight + it_evicted -> weight;
-      auto weight = it_evicted -> weight;
-      std::transform(it_evicted->ratios.begin(),
-		     it_evicted->ratios.end(),
-		     it_evicted->ratios.begin(),
-		     [&combined_weight,&weight](auto& ratio){return ratio*weight/combined_weight;});
-      weight = it_relocation -> weight;
-      std::transform(it_relocation->ratios.begin(),
-		     it_relocation->ratios.end(),
-		     it_relocation->ratios.begin(),
-		     [&combined_weight,&weight](auto& ratio){return ratio*weight/combined_weight;});
+      auto log_combined_weight = log_add_exp(it_relocation->log_weight, it_evicted->log_weight);
+      if(log_combined_weight == -std::numeric_limits<real_type>::infinity())
+      {
+        std::fill(it_evicted->ratios.begin(), it_evicted->ratios.end(), 0.0);
+        std::fill(it_relocation->ratios.begin(), it_relocation->ratios.end(), 0.0);
+      }
+      else
+      {
+        auto fraction = std::exp(it_evicted->log_weight - log_combined_weight);
+        std::transform(it_evicted->ratios.begin(), it_evicted->ratios.end(),
+          it_evicted->ratios.begin(),
+          [fraction](auto ratio){return ratio * fraction;});
+        fraction = std::exp(it_relocation->log_weight - log_combined_weight);
+        std::transform(it_relocation->ratios.begin(), it_relocation->ratios.end(),
+          it_relocation->ratios.begin(),
+          [fraction](auto ratio){return ratio * fraction;});
+      }
       it_relocation->ratios.insert(it_relocation->ratios.begin(),it_evicted->ratios.begin(),it_evicted->ratios.end());
-      // update weight
-      it_relocation -> weight += it_evicted -> weight;
-      // evict the pruned particle
+      it_relocation->log_weight = log_combined_weight;
       particles.erase(it_evicted);
     }  
   return particles;

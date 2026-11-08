@@ -17,6 +17,10 @@
 #include "theorem_4.h"
 #include "normal_density.h"
 #include <list>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <stdexcept>
 #include "prune.h"
 
 #include "model_type.h"
@@ -48,9 +52,14 @@ struct bagel_type
   }
 
 
+  real_type log_weight_0_t() const
+  {
+    return particles.front().log_weight;
+  }
+
   real_type weight_0_t() const
   {
-    return particles.front().weight;
+    return std::exp(particles.front().log_weight);
   }
 
   std::list<std::list<ratio_type> > ratios() const
@@ -73,7 +82,7 @@ struct bagel_type
 	initial_particle = theorem_1(initial_particle,initial_particle,t);
 	initial_particle = theorem_4(initial_particle,t,y);
 	initial_particle = theorem_3(initial_particle,t,y);
-	initial_particle.weight = initial_particle.p0; 
+	initial_particle.log_weight = std::log(initial_particle.p0);
 	particles.push_back(initial_particle);
       }
     else
@@ -81,7 +90,7 @@ struct bagel_type
 	// new particle
 	initial_particle = particles.front();
 	particles.push_back(theorem_2(initial_particle,t));
-	real_type sum_of_weights = 0.0;      
+
 	for(auto& p : particles)
 	  {
 	    p = theorem_1(initial_particle,p,t);
@@ -91,12 +100,22 @@ struct bagel_type
 	  {
 	    p = theorem_4(p,t,y);
 	    p = theorem_3(p,t,y);
-	    sum_of_weights += p.weight;
 	  }
-	for(auto& p : particles)
-	  {
-	    p.weight = p.weight/sum_of_weights;
-	  }
+        real_type max_log_weight = -std::numeric_limits<real_type>::infinity();
+        for(const auto& particle : particles)
+          {
+            if(std::isnan(particle.log_weight) || particle.log_weight == std::numeric_limits<real_type>::infinity())
+              throw std::runtime_error("Non-finite particle log weight; check observations and model parameters.");
+            max_log_weight = std::max(max_log_weight, particle.log_weight);
+          }
+        if(!std::isfinite(max_log_weight))
+          throw std::runtime_error("All particle weights are zero; check observations and model parameters.");
+        real_type scaled_sum = 0.0;
+        for(const auto& particle : particles)
+          scaled_sum += std::exp(particle.log_weight - max_log_weight);
+        const real_type log_scaled_sum = std::log(scaled_sum);
+        for(auto& particle : particles)
+          particle.log_weight = (particle.log_weight - max_log_weight) - log_scaled_sum;
 
 	particles = prune(particles,max_num_particles);
       }
@@ -115,6 +134,12 @@ template<typename noise, KL_divergence_type KL_divergence>
 real_type weight_0_t(const bagel_type<noise,KL_divergence>& bagel)
 {
   return bagel.weight_0_t();
+}
+
+template<typename noise, KL_divergence_type KL_divergence>
+real_type log_weight_0_t(const bagel_type<noise,KL_divergence>& bagel)
+{
+  return bagel.log_weight_0_t();
 }
 
 template<typename noise, KL_divergence_type KL_divergence>

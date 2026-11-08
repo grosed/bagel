@@ -27,7 +27,7 @@ struct particle_type
   real_type p0;
   real_type p;
   post_type post;
-  real_type weight;
+  real_type log_weight;
   std::list<ratio_type> ratios;
 
   particle_type() {};
@@ -43,7 +43,7 @@ struct particle_type
       p0 = other.p0;
       p = other.p;
       post = other.post;
-      weight = other.weight;
+      log_weight = other.log_weight;
       ratios = other.ratios;
       return *this;
     }
@@ -59,7 +59,7 @@ struct particle_type
     tau = _tau;
     p0 = _p0;
     p = _p;
-    weight = 1.0;
+    log_weight = 0.0;
     ratios.push_front(1.0);
   }
 
