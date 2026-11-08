@@ -10,7 +10,6 @@
 /bagelR/src/*.so
 /bagelR/src/*.a
 /bagelR/src/symbols.rds
-/bagelR/vignettes/*.html
 /bagelR/inst/doc/
 
 # Local package builds and checks
