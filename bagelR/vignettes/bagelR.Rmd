@@ -1,0 +1,882 @@
+---
+title: "Getting started with bagelR"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    self_contained: true
+    mathjax: null
+    pandoc_args: ["--mathml"]
+vignette: >
+  %\VignetteIndexEntry{Getting started with bagelR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = NA, message = FALSE,
+  fig.width = 6, fig.height = 3.5, fig.align = "center",
+  dpi = 96, error = FALSE
+)
+options(width = 80)
+```
+
+# Overview
+
+`bagelR` is an R package with a C++ backend that performs fast Bayesian online changepoint detection for linear models.
+It implements the algorithm in [Bagel: A Fast Bayesian Online Changepoint Detection Algorithm for Linear Models via Posterior Merging](https://arxiv.org/html/2611.03230v1).
+The algorithm extends classical Bayesian online changepoint detection to linear models and introduces a merging strategy to
+reduce the cost of posterior updating while maintaining an approximation to the posterior distribution. A short video introduces
+the general idea of Bagel through an application to Azure LLM trace data.
+
+[![Watch the Bagel introduction video](media/bagel-introduction.jpg)](https://github.com/grosed/bagel/releases/download/bagel-introduction/bagel-introduction.mp4)
+
+[Watch the introduction video](https://github.com/grosed/bagel/releases/download/bagel-introduction/bagel-introduction.mp4)
+(hosted on GitHub; internet access required). A transcript and credits are provided below.
+
+<details>
+<summary>Transcript and video credits</summary>
+
+Kitty's job is to monitor live data streams and report anomalies as quickly as possible!
+A sudden jump, a turning trend, or a new daily rhythm... Kitty watches for them all.
+
+Kitty wants to spot changes, and understand when they happened and how certain they are.
+Kitty chooses a Bayesian changepoint detection algorithm.
+
+However, classical Bayesian updating considers every past observation as a possible
+change location whenever new data arrives. More data, more waiting... Poor Kitty...
+
+Until Kitty finds Bagel!
+
+Bagel merges neighbouring candidates as new data arrives.
+Kitty keeps monitoring as the history grows.
+With a fixed budget, the work per update stays bounded.
+
+Kitty monitors average generated tokens for Azure coding requests, in five-minute intervals.
+The yellow line is the fitted line.
+The red shading shows where the change likely happened.
+
+Now Kitty can monitor the stream quickly and see how certain each change is.
+
+**Data:** Microsoft [Azure LLM inference trace 2024](https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2024.md),
+code-request dataset, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Adaptations: five-minute averages of generated tokens per request, BAGEL analysis,
+and animated visualisation. The dataset's accompanying study is Jovan Stojkovic,
+Chaojie Zhang, Íñigo Goiri, Josep Torrellas, and Esha Choukse,
+[*DynamoLLM: Designing LLM Inference Clusters for Performance and Energy Efficiency*](https://arxiv.org/abs/2408.00741),
+HPCA 2025.
+
+**Narration:** synthetic speech generated with [Kokoro v1.0](https://huggingface.co/hexgrad/Kokoro-82M),
+voice `bf_alice` (model weights licensed under Apache 2.0).
+The illustrations and sound effects were created for this video.
+
+</details>
+
+The video shows the online setting, while the package supports both offline and online use: data arrive sequentially in the online setting, whereas
+all data are available in the offline setting. This vignette first introduces the model interface through offline examples of changes in mean, slope, and seasonality,
+including a mean change with autocorrelated errors. It then uses a mean change to illustrate the online setting.
+In both settings, `bagelR` processes observations sequentially and considers at most one change per detector run.
+Models that can be expressed as linear Gaussian models with the conjugate priors described below can be implemented with `bagelR`.
+
+
+
+```{r load-package}
+library(bagelR)
+
+n_obs <- 200
+tau_true <- 100
+```
+
+
+Suppose the observations follow a linear model with independent Gaussian errors:
+
+\[
+y_t=a_t^{\mathsf T}\beta+b_{t,\tau}^{\mathsf T}\gamma+\varepsilon_t,
+\qquad \varepsilon_t\mid\sigma_\varepsilon^2\overset{\mathrm{iid}}\sim N(0,\sigma_\varepsilon^2),
+\]
+
+where \(\beta\) contains the no-change coefficients and \(\gamma\) contains the change coefficients.
+The vectors \(a_t\) and \(b_{t,\tau}\) are the corresponding features, with \(b_{t,\tau}=0\) for \(t\leq\tau\).
+A change at `tau = k` means the change starts at observation
+`k + 1`; `tau = 0` is the package's label for no change.
+The change term is omitted under the no-change model.
+
+For a change candidate, the coefficient prior is
+\[
+\theta=\left[\beta^{\mathsf T},\,\gamma^{\mathsf T}\right]^{\mathsf T},\qquad
+\theta\mid\sigma_\varepsilon^2,\tau\sim N(\mu_\tau,\sigma_\varepsilon^2\Sigma_\tau).
+\]
+Thus, `prior(t)$sigma` is the covariance factor \(\Sigma_\tau\); the coefficient covariance is
+\(\sigma_\varepsilon^2\Sigma_\tau\), even when the noise variance is known.
+When the noise variance is unknown, \(\sigma_\varepsilon^2\sim\operatorname{IG}(\nu,\iota)\),
+with shape \(\nu\) and scale \(\iota\).
+
+Our aim is to detect whether there is a change by tracking
+\(1-P(\tau=0\mid y_{1:t})\) at each time step, and, if so, where it is by estimating the posterior distribution of the change location
+\(P(\tau\mid y_{1:t})\). 
+
+# Model interface
+To compute the posterior probabilities for the no-change and change models, we need to specify:
+
+| Function or argument | Return value or type | Purpose |
+|:--|:--|:--|
+| `feature_vector(t, tau)` | Column matrix | Returns \(a_t\) for no change and \((a_t^{\mathsf T},b_{t,\tau}^{\mathsf T})^{\mathsf T}\) for a change candidate. |
+| `prior(t)` | List with `mu` and `sigma` | Returns the coefficient prior mean \(\mu\) and covariance factor \(\Sigma\). The noise variance is specified separately in the detector. |
+| `transform(tau)` | Transformation matrix \(A_\tau\) | Maps the pre-change and change coefficients to the post-change parameters used in posterior merging. |
+| `p0` | Prior probability of no change | Sets the prior probability of no change; the total prior probability of a change is \(1-p_0\). |
+| `p` | Changepoint-prior parameter | The paper defines \(\Pr_t(\tau=t-k\mid 1\leq\tau<t)\propto p^k\), for \(k=1,\ldots,t-1\). The current implementation uses a uniform location prior regardless of `p`; use `p = 1` in these examples. |
+| `max_particles` | Maximum number of particles | Limits the number of merged groups, including no change, to control computation. Use a value of at least 3. |
+| `threshold` | Alarm threshold | Stops processing when the posterior change probability exceeds this value, e.g. `0.95` for 95%. Use `1` or `Inf` to process all observations. It is usually calibrated to a target false alarm rate or average run length under no change. |
+| `pruning` | Pruning method | `bagel` uses the Bagel merging criteria, `LP-M` and `LP-P` are merging or pruning the lowest poesterior probability as shown in the paper. |
+
+The detector has three functions as follows. `exact` refers to the total-variation distance used to choose merges in the scalar case; 
+the `approximate` methods use a KL-based bound for this distance.
+
+| Function | Scenario | Noise arguments |
+|:--|:--|:--|
+| `bagel_kv_exact()` | Known variance, one-dimensional no-change model, e.g. mean change. | `sigma`: known noise standard deviation \(\sigma_\varepsilon\). |
+| `bagel_kv_approximate()` | Known variance, no-change dimension at least two. | `sigma`: known noise standard deviation \(\sigma_\varepsilon\). |
+| `bagel_uv_approximate()` | Unknown variance. | `nu`, `iota`: shape and scale of \(\sigma_\varepsilon^2\sim\operatorname{IG}(\nu,\iota)\). |
+
+
+The fitted result provides the following accessors:
+
+| Element | Meaning |
+|:--|:--|
+| `weights_tau_zero()` | The trace of no-change probability \(P(\tau=0\mid y_{1:t})\) for \(t=1,\ldots,T\). |
+| `weights()` | The recovered posterior probabilities \(P(\tau\mid y_{1:T})\), ordered as \(\tau=0,1,\ldots,T-1\). The first entry is the no-change probability. |
+| `active_weights()` | The posterior probabilities of the merged groups, including no change, with at most `max_particles` entries. |
+| `active_posteriors()` | Coefficient posterior mean `mu` and covariance factor `sigma` for each merged group, together with its `weight` and representative `tau` (the group's right endpoint), in the same order as `active_weights()`. Unknown-variance fits also return `nu` and `iota` for the noise variance. |
+| `taus()` | The representative changepoint locations (right endpoints) of the merged groups, in the same order as `active_weights()`. The first entry is 0 for no change. |
+| `ratios()` | A list of relative probabilities within each merged group, ordered by changepoint location. `length(ratios(fit)[[g]])` is the number of locations in group `g`; multiplying `ratios(fit)[[g]]` by `active_weights(fit)[g]` recovers their individual posterior probabilities. |
+| `changepoint()` | Returns `location`, the MAP location conditional on a change, and `detected`, the first alarm time or `NA` if no alarm occurred. |
+
+Here \(T\) is the stopping time in the online setting or the total number of observations in the offline setting.
+
+# Example - change in mean
+
+The mean change model can be expressed as
+\[
+y_t=\beta+\gamma\mathbf{1}(t>\tau)+\varepsilon_t.
+\]
+In this example, we specify the feature vector, prior, and transformation as follows:
+\[
+h_t(0)=\left[1\right],\qquad
+h_t(\tau)=\left[1,\,\mathbf{1}(t>\tau)\right]^{\mathsf T}
+\quad(\tau\geq1).
+\]
+\[
+\mu=\left[0,\,0\right]^{\mathsf T},\quad
+\Sigma=\left[\begin{matrix}1&-1\\-1&2\end{matrix}\right],\quad
+A_\tau=\left[\begin{matrix}1&1\end{matrix}\right].
+\]
+We use noise standard deviation \(\sigma_\varepsilon=1\) if it is known, or \(\nu=3,\ \iota=2\)
+for the inverse-gamma prior when it is unknown.
+
+This prior gives independent pre- and post-change means conditional on the
+observation variance. The transformation returns the post-change mean
+\(\beta+\gamma\).
+
+```{r mean-model}
+feature_mean <- function(t, tau) {
+  if (tau == 0) return(matrix(1, 1, 1))
+  matrix(c(1, as.numeric(t > tau)), ncol = 1)
+}
+
+prior_mean <- function(t) {
+  if (t == 1) {
+    return(list(mu = matrix(0, 1, 1), sigma = matrix(1, 1, 1)))
+  }
+  list(mu = matrix(0, 2, 1), sigma = matrix(c(1, -1, -1, 2), 2, 2))
+}
+
+transform_mean <- function(tau) {
+  if (tau == 0) return(matrix(1, 1, 1))
+  matrix(c(1, 1), nrow = 1)
+}
+
+set.seed(0)
+y_mean <- c(rep(0, tau_true), rep(1, n_obs - tau_true)) + rnorm(n_obs, sd = 1)
+```
+We fit the mean-change model with known and unknown variance using `bagel_kv_exact()` and `bagel_uv_approximate()`, respectively.
+```{r mean-detectors}
+fit_mean_kv <- bagel_kv_exact(
+  Y = y_mean, feature_vector = feature_mean, prior = prior_mean,
+  transform = transform_mean, p0 = 0.9, p = 1, sigma = 1,
+  max_particles = 30, threshold = Inf
+)
+
+fit_mean_uv <- bagel_uv_approximate(
+  Y = y_mean, feature_vector = feature_mean, prior = prior_mean,
+  transform = transform_mean, p0 = 0.9, p = 1, nu = 3, iota = 2,
+  max_particles = 30, threshold = Inf
+)
+```
+
+The plots below show the probability of a change over time and the posterior distribution of the changepoint location
+when `threshold = Inf`. The red dashed lines mark the MAP locations.
+The printed outputs show the endpoints and coefficient posterior parameters of the merged group with the largest active weight.
+
+```{r mean-detectors-output, fig.width=8, fig.height=6}
+map_mean_kv <- changepoint(fit_mean_kv)$location
+map_mean_uv <- changepoint(fit_mean_uv)$location
+stoppingtime_mean_kv <- changepoint(fit_mean_kv)$detected
+stoppingtime_mean_uv <- changepoint(fit_mean_uv)$detected
+
+par(mfrow = c(2, 2))
+
+plot(1 - weights_tau_zero(fit_mean_kv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Known variance", col = "black")
+
+plot(1 - weights_tau_zero(fit_mean_uv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Unknown variance", col = "black")
+
+plot(seq_along(weights(fit_mean_kv)) - 1, weights(fit_mean_kv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Known variance", col = "black")
+abline(v = map_mean_kv, col = "red", lty = 2, lwd = 1.5)
+
+plot(seq_along(weights(fit_mean_uv)) - 1, weights(fit_mean_uv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Unknown variance", col = "black")
+abline(v = map_mean_uv, col = "red", lty = 2, lwd = 1.5)
+
+group <- which.max(active_weights(fit_mean_kv))
+right <- taus(fit_mean_kv)[group]
+left <- right - length(ratios(fit_mean_kv)[[group]]) + 1
+print("Known variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_mean_kv)[[group]])
+group <- which.max(active_weights(fit_mean_uv))
+right <- taus(fit_mean_uv)[group]
+left <- right - length(ratios(fit_mean_uv)[[group]]) + 1
+print("Unknown variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_mean_uv)[[group]])
+```
+
+
+# Example - change in slope
+There are two types of slope changes: continuous and discontinuous. We show examples of both types below, using \(x_t=t\).
+
+## Continuous slope change
+The observations follow
+
+\[
+y_t=\beta_0+\beta_1x_t+
+(\gamma_0+\gamma_1x_t)\mathbf{1}(t>\tau)+\varepsilon_t,
+\qquad \gamma_0=-x_\tau\gamma_1.
+\]
+
+Define the feature vector as
+\[
+h_t(0)=\left[1,\,x_t\right]^{\mathsf T},\qquad
+h_t(\tau)=\left[1,\,x_t,\,\mathbf{1}(t>\tau),\,x_t\mathbf{1}(t>\tau)\right]^{\mathsf T}\quad(\tau\geq1),
+\]
+and the prior and transformation functions as
+\[
+\mu=\left[0,\,0.2,\,0,\,0\right]^{\mathsf T},\qquad
+\Sigma_\tau=\left[\begin{matrix}1&0&0&0\\
+0&1&0&0\\
+0&0&4x_\tau^2&-4x_\tau\\
+0&0&-4x_\tau&4\end{matrix}\right],\qquad
+A_\tau=\left[\begin{matrix}1&0&1&0\\0&1&0&1\end{matrix}\right].
+\]
+Use \(\sigma_\varepsilon=1\) when known, or \(\nu=3,\ \iota=2\)
+for the inverse-gamma prior when unknown.
+
+The covariance is singular to enforce the continuity constraint
+\(\gamma_0+x_\tau\gamma_1=0\).
+
+```{r continuous-slope-model}
+feature_slope_cont <- function(t, tau) {
+  x <- t
+  if (tau == 0) return(matrix(c(1, x), ncol = 1))
+  matrix(c(1, x, as.numeric(t > tau) * c(1, x)), ncol = 1)
+}
+
+prior_slope_cont <- function(t) {
+  if (t == 1) {
+    return(list(mu = matrix(c(0, 0.2), ncol = 1), sigma = diag(2)))
+  }
+  x_tau <- t - 1
+  covariance <- matrix(0, 4, 4)
+  covariance[1:2, 1:2] <- diag(2)
+  covariance[3:4, 3:4] <- 4 * matrix(c(x_tau^2, -x_tau, -x_tau, 1), 2, 2)
+  list(mu = matrix(c(0, 0.2, 0, 0), ncol = 1), sigma = covariance)
+}
+
+transform_slope_cont <- function(tau) {
+  if (tau == 0) return(diag(2))
+  rbind(c(1, 0, 1, 0), c(0, 1, 0, 1))
+}
+
+set.seed(0)
+x_cont <- seq_len(n_obs)
+y_slope_cont <- 0.2 * x_cont + 2 * pmax(x_cont - tau_true, 0) +
+  rnorm(length(x_cont), sd = 1)
+```
+
+```{r continuous-slope-detectors}
+fit_slope_cont_kv <- bagel_kv_approximate(
+  Y = y_slope_cont, feature_vector = feature_slope_cont, prior = prior_slope_cont,
+  transform = transform_slope_cont, p0 = 0.9, p = 1, sigma = 1,
+  max_particles = 30, threshold = Inf
+)
+
+fit_slope_cont_uv <- bagel_uv_approximate(
+  Y = y_slope_cont, feature_vector = feature_slope_cont, prior = prior_slope_cont,
+  transform = transform_slope_cont, p0 = 0.9, p = 1, nu = 3, iota = 2,
+  max_particles = 30, threshold = Inf
+)
+
+```
+
+As in the mean-change example, the following plots and outputs summarise the fitted continuous slope-change model.
+
+```{r continuous-slope-detectors-output, fig.width=8, fig.height=6}
+map_slope_cont_kv <- changepoint(fit_slope_cont_kv)$location
+map_slope_cont_uv <- changepoint(fit_slope_cont_uv)$location
+stoppingtime_slope_cont_kv <- changepoint(fit_slope_cont_kv)$detected
+stoppingtime_slope_cont_uv <- changepoint(fit_slope_cont_uv)$detected
+
+par(mfrow = c(2, 2))
+
+plot(1 - weights_tau_zero(fit_slope_cont_kv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Known variance", col = "black")
+
+plot(1 - weights_tau_zero(fit_slope_cont_uv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Unknown variance", col = "black")
+
+plot(seq_along(weights(fit_slope_cont_kv)) - 1, weights(fit_slope_cont_kv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Known variance", col = "black")
+abline(v = map_slope_cont_kv, col = "red", lty = 2, lwd = 1.5)
+
+plot(seq_along(weights(fit_slope_cont_uv)) - 1, weights(fit_slope_cont_uv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Unknown variance", col = "black")
+abline(v = map_slope_cont_uv, col = "red", lty = 2, lwd = 1.5)
+
+group <- which.max(active_weights(fit_slope_cont_kv))
+right <- taus(fit_slope_cont_kv)[group]
+left <- right - length(ratios(fit_slope_cont_kv)[[group]]) + 1
+print("Known variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_slope_cont_kv)[[group]])
+group <- which.max(active_weights(fit_slope_cont_uv))
+right <- taus(fit_slope_cont_uv)[group]
+left <- right - length(ratios(fit_slope_cont_uv)[[group]]) + 1
+print("Unknown variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_slope_cont_uv)[[group]])
+```
+
+## Discontinuous slope change
+The discontinuous slope change model can be written as
+\[
+y_t=\beta_0+\beta_1x_t+
+\{\gamma_0+\gamma_1(x_t-x_\tau)\}\mathbf{1}(t>\tau)+\varepsilon_t.
+\]
+Here \(\gamma_0\) is the level jump at \(x_\tau\), and \(\gamma_1\) is the slope change.
+Define the feature vector as
+\[
+h_t(0)=\left[1,\,x_t\right]^{\mathsf T},\qquad
+h_t(\tau)=\left[1,\,x_t,\,\mathbf{1}(t>\tau),\,(x_t-x_\tau)\mathbf{1}(t>\tau)\right]^{\mathsf T}\quad(\tau\geq1),
+\]
+and the prior and transformation functions as
+\[
+\mu=\left[0,\,0.2,\,0,\,0\right]^{\mathsf T},\qquad
+\Sigma=\operatorname{diag}\left[1,1,4,4\right],\qquad
+A_\tau=\left[\begin{matrix}1&0&1&-x_\tau\\0&1&0&1\end{matrix}\right].
+\]
+We assume \(\sigma_\varepsilon=1\) when known, or \(\nu=3,\ \iota=2\)
+for the inverse-gamma prior when unknown.
+
+```{r discontinuous-slope-model}
+feature_slope_disc <- function(t, tau) {
+  x <- t 
+  if (tau == 0) return(matrix(c(1, x), ncol = 1))
+  matrix(c(1, x, as.numeric(t > tau), max(0, x - tau)), ncol = 1)
+}
+
+prior_slope_disc <- function(t) {
+  if (t == 1) {
+    return(list(mu = matrix(c(0, 0.2), ncol = 1), sigma = diag(2)))
+  }
+  list(mu = matrix(c(0, 0.2, 0, 0), ncol = 1), sigma = diag(c(1, 1, 4, 4)))
+}
+
+transform_slope_disc <- function(tau) {
+  if (tau == 0) return(diag(2))
+  rbind(c(1, 0, 1, -tau), c(0, 1, 0, 1))
+}
+
+set.seed(0)
+x_disc <- seq_len(n_obs)
+y_slope_disc <- 0.2 * x_disc +
+  (1 + 2 * (x_disc - tau_true)) * (x_disc > tau_true) +
+  rnorm(length(x_disc), sd = 1)
+```
+
+```{r discontinuous-slope-detectors}
+fit_slope_disc_kv <- bagel_kv_approximate(
+  Y = y_slope_disc, feature_vector = feature_slope_disc, prior = prior_slope_disc,
+  transform = transform_slope_disc, p0 = 0.9, p = 1, sigma = 1,
+  max_particles = 30, threshold = Inf
+)
+
+fit_slope_disc_uv <- bagel_uv_approximate(
+  Y = y_slope_disc, feature_vector = feature_slope_disc, prior = prior_slope_disc,
+  transform = transform_slope_disc, p0 = 0.9, p = 1, nu = 3, iota = 2,
+  max_particles = 30, threshold = Inf
+)
+```
+
+We use the same syntax to fit the model and plot the results.
+
+```{r discontinuous-slope-detectors-output, fig.width=8, fig.height=6}
+map_slope_disc_kv <- changepoint(fit_slope_disc_kv)$location
+map_slope_disc_uv <- changepoint(fit_slope_disc_uv)$location
+stoppingtime_slope_disc_kv <- changepoint(fit_slope_disc_kv)$detected
+stoppingtime_slope_disc_uv <- changepoint(fit_slope_disc_uv)$detected
+par(mfrow = c(2, 2))
+
+plot(1 - weights_tau_zero(fit_slope_disc_kv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Known variance", col = "black")
+
+plot(1 - weights_tau_zero(fit_slope_disc_uv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Unknown variance", col = "black")
+
+plot(seq_along(weights(fit_slope_disc_kv)) - 1, weights(fit_slope_disc_kv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Known variance", col = "black")
+abline(v = map_slope_disc_kv, col = "red", lty = 2, lwd = 1.5)
+
+plot(seq_along(weights(fit_slope_disc_uv)) - 1, weights(fit_slope_disc_uv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Unknown variance", col = "black")
+abline(v = map_slope_disc_uv, col = "red", lty = 2, lwd = 1.5)
+
+group <- which.max(active_weights(fit_slope_disc_kv))
+right <- taus(fit_slope_disc_kv)[group]
+left <- right - length(ratios(fit_slope_disc_kv)[[group]]) + 1
+print("Known variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_slope_disc_kv)[[group]])
+group <- which.max(active_weights(fit_slope_disc_uv))
+right <- taus(fit_slope_disc_uv)[group]
+left <- right - length(ratios(fit_slope_disc_uv)[[group]]) + 1
+print("Unknown variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_slope_disc_uv)[[group]])
+```
+
+# Example - change in seasonality
+Bagel can detect changes in seasonality or include seasonality as a background signal by adding Fourier basis functions to the linear model.
+Here we show how to detect a change in seasonality. Assuming a fixed period \(P=24\) and one harmonic, the model can be written as
+
+\[
+y_t=\beta_s s_t+\beta_c c_t+
+(\gamma_s s_t+\gamma_c c_t)\mathbf{1}(t>\tau)+\varepsilon_t,
+\]
+where \(s_t=\sin(2\pi t/P)\) and \(c_t=\cos(2\pi t/P)\).
+
+Define the feature vector as
+\[
+h_t(0)=\left[s_t,\,c_t\right]^{\mathsf T},\qquad
+h_t(\tau)=\left[s_t,\,c_t,\,s_t\mathbf{1}(t>\tau),\,c_t\mathbf{1}(t>\tau)\right]^{\mathsf T}\quad(\tau\geq1),
+\]
+and the prior and transformation functions as
+\[
+\mu=\left[0,\,0,\,0,\,0\right]^{\mathsf T},\qquad D=4I_2,\qquad
+\Sigma=\left[\begin{matrix}D&-D\\-D&2D\end{matrix}\right],\qquad
+A_\tau=\left[\begin{matrix}I_2&I_2\end{matrix}\right].
+\]
+We assume \(\sigma_\varepsilon=1\) when known, or \(\nu=3,\ \iota=2\)
+for the inverse-gamma prior when unknown.
+
+
+```{r seasonal-model}
+period <- 24
+
+feature_seasonal <- function(t, tau) {
+  basis <- c(sin(2 * pi * t / period), cos(2 * pi * t / period))
+  if (tau == 0) return(matrix(basis, ncol = 1))
+  matrix(c(basis, as.numeric(t > tau) * basis), ncol = 1)
+}
+
+prior_seasonal <- function(t) {
+  D <- diag(c(4, 4))
+  if (t == 1) return(list(mu = matrix(0, 2, 1), sigma = D))
+  list(mu = matrix(0, 4, 1),
+       sigma = rbind(cbind(D, -D), cbind(-D, 2 * D)))
+}
+
+transform_seasonal <- function(tau) {
+  if (tau == 0) return(diag(2))
+  cbind(diag(2), diag(2))
+}
+
+set.seed(0)
+t_seasonal <- seq_len(n_obs)
+seasonal_mean <- ifelse(t_seasonal <= tau_true,
+                        sin(2 * pi * t_seasonal / period),
+                        1.5 * cos(2 * pi * t_seasonal / period))
+y_seasonal <- seasonal_mean + rnorm(length(t_seasonal), sd = 1)
+```
+
+```{r seasonal-detectors}
+fit_seasonal_kv <- bagel_kv_approximate(
+  Y = y_seasonal, feature_vector = feature_seasonal, prior = prior_seasonal,
+  transform = transform_seasonal, p0 = 0.9, p = 1, sigma = 1,
+  max_particles = 30, threshold = Inf
+)
+
+fit_seasonal_uv <- bagel_uv_approximate(
+  Y = y_seasonal, feature_vector = feature_seasonal, prior = prior_seasonal,
+  transform = transform_seasonal, p0 = 0.9, p = 1, nu = 3, iota = 2,
+  max_particles = 30, threshold = Inf
+)
+
+```
+
+We use the same syntax to fit the seasonal-change model and plot the results.
+
+```{r seasonal-detectors-output, fig.width=8, fig.height=6}
+map_seasonal_kv <- changepoint(fit_seasonal_kv)$location
+map_seasonal_uv <- changepoint(fit_seasonal_uv)$location
+par(mfrow = c(2, 2))
+
+plot(1 - weights_tau_zero(fit_seasonal_kv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Known variance", col = "black")
+
+plot(1 - weights_tau_zero(fit_seasonal_uv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Unknown variance", col = "black")
+
+plot(seq_along(weights(fit_seasonal_kv)) - 1, weights(fit_seasonal_kv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Known variance", col = "black")
+abline(v = map_seasonal_kv, col = "red", lty = 2, lwd = 1.5)
+
+plot(seq_along(weights(fit_seasonal_uv)) - 1, weights(fit_seasonal_uv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Unknown variance", col = "black")
+abline(v = map_seasonal_uv, col = "red", lty = 2, lwd = 1.5)
+
+group <- which.max(active_weights(fit_seasonal_kv))
+right <- taus(fit_seasonal_kv)[group]
+left <- right - length(ratios(fit_seasonal_kv)[[group]]) + 1
+print("Known variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_seasonal_kv)[[group]])
+group <- which.max(active_weights(fit_seasonal_uv))
+right <- taus(fit_seasonal_uv)[group]
+left <- right - length(ratios(fit_seasonal_uv)[[group]]) + 1
+print("Unknown variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_seasonal_uv)[[group]])
+```
+
+# Example - change in mean with autocorrelated errors
+The Bagel framework also accommodates autocorrelated errors through a suitable transformation.
+Here we consider a mean change with stationary AR(1) errors and a known autocorrelation coefficient \(\rho=0.6\).
+
+The model can be expressed as
+\[
+y_t=\beta+\gamma\mathbf{1}(t>\tau)+e_t,\qquad
+e_t=\rho e_{t-1}+\eta_t,\qquad
+\eta_t\overset{\mathrm{iid}}\sim N(0,\sigma_\eta^2).
+\]
+
+With \(e_1\sim N(0,\sigma_\eta^2/(1-\rho^2))\), independent of subsequent innovations,
+we introduce the transformed observation \(z_t=y_t-\rho y_{t-1}\) for \(t\geq2\). Then
+\[
+\begin{aligned}
+z_t&=y_t-\rho y_{t-1}\\
+&=(1-\rho)\beta+
+\gamma\left[\mathbf{1}(t>\tau)-\rho\mathbf{1}(t-1>\tau)\right]+\eta_t,
+\qquad t\geq2.
+\end{aligned}
+\]
+For the first observation, set \(z_1=\sqrt{1-\rho^2}\,y_1\).
+The transformed errors are independent with variance \(\sigma_\eta^2\).
+
+Define the feature vector as
+\[
+h_t(0)=\left[a_t\right],\qquad
+h_t(\tau)=\left[a_t,\,\mathbf{1}(t>\tau)-\rho\mathbf{1}(t-1>\tau)\right]^{\mathsf T}\quad(\tau\geq1),
+\]
+where
+\[
+a_t=\begin{cases}\sqrt{1-\rho^2},&t=1,\\1-\rho,&t\geq2.\end{cases}
+\]
+The prior and transformation are
+\[
+\mu=\left[0,\,0\right]^{\mathsf T},\quad
+\Sigma=\left[\begin{matrix}1&-1\\-1&2\end{matrix}\right],\quad
+A_\tau=\left[\begin{matrix}1&1\end{matrix}\right].
+\]
+We set \(\sigma_\eta=0.7\) when the noise variance is known, or \(\nu=3,\ \iota=2\)
+for the inverse-gamma prior on \(\sigma_\eta^2\) when it is unknown.
+The coefficient covariance in this transformed model is \(\sigma_\eta^2\Sigma\).
+
+```{r autocorrelated-model}
+rho <- 0.6
+
+feature_ar1 <- function(t, tau) {
+  baseline <- if (t == 1) sqrt(1 - rho^2) else 1 - rho
+  if (tau == 0) return(matrix(baseline, 1, 1))
+  change <- as.numeric(t > tau) - rho * as.numeric(t - 1 > tau)
+  matrix(c(baseline, change), ncol = 1)
+}
+
+prior_ar1 <- function(t) {
+  if (t == 1) {
+    return(list(mu = matrix(0, 1, 1), sigma = matrix(1, 1, 1)))
+  }
+  list(mu = matrix(0, 2, 1), sigma = matrix(c(1, -1, -1, 2), 2, 2))
+}
+
+transform_ar1 <- function(tau) {
+  if (tau == 0) return(matrix(1, 1, 1))
+  matrix(c(1, 1), nrow = 1)
+}
+
+set.seed(0)
+ar_error <- numeric(n_obs)
+ar_error[1] <- rnorm(1, sd = 0.7 / sqrt(1 - rho^2))
+for (t in 2:length(ar_error)) {
+  ar_error[t] <- rho * ar_error[t - 1] + rnorm(1, sd = 0.7)
+}
+y_ar <- c(rep(0, tau_true), rep(2, n_obs - tau_true)) + ar_error
+z_ar <- c(sqrt(1 - rho^2) * y_ar[1],
+          y_ar[-1] - rho * head(y_ar, -1))
+```
+
+```{r autocorrelation-detectors}
+fit_ar_kv <- bagel_kv_exact(
+  Y = z_ar, feature_vector = feature_ar1, prior = prior_ar1,
+  transform = transform_ar1, p0 = 0.9, p = 1, sigma = 0.7,
+  max_particles = 30, threshold = Inf
+)
+
+fit_ar_uv <- bagel_uv_approximate(
+  Y = z_ar, feature_vector = feature_ar1, prior = prior_ar1,
+  transform = transform_ar1, p0 = 0.9, p = 1, nu = 3, iota = 2,
+  max_particles = 30, threshold = Inf
+)
+
+```
+
+We use the same syntax to fit the mean-change model with autocorrelated errors and plot the results.
+
+```{r autocorrelation-detectors-output, fig.width=8, fig.height=6}
+map_ar_kv <- changepoint(fit_ar_kv)$location
+map_ar_uv <- changepoint(fit_ar_uv)$location
+par(mfrow = c(2, 2))
+
+plot(1 - weights_tau_zero(fit_ar_kv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Known variance", col = "black")
+
+plot(1 - weights_tau_zero(fit_ar_uv), type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Unknown variance", col = "black")
+
+plot(seq_along(weights(fit_ar_kv)) - 1, weights(fit_ar_kv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Known variance", col = "black")
+abline(v = map_ar_kv, col = "red", lty = 2, lwd = 1.5)
+
+plot(seq_along(weights(fit_ar_uv)) - 1, weights(fit_ar_uv),
+     type = "h", xlab = "Changepoint location",
+     ylab = "Posterior probability", main = "Unknown variance", col = "black")
+abline(v = map_ar_uv, col = "red", lty = 2, lwd = 1.5)
+
+group <- which.max(active_weights(fit_ar_kv))
+right <- taus(fit_ar_kv)[group]
+left <- right - length(ratios(fit_ar_kv)[[group]]) + 1
+print("Known variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_ar_kv)[[group]])
+group <- which.max(active_weights(fit_ar_uv))
+right <- taus(fit_ar_uv)[group]
+left <- right - length(ratios(fit_ar_uv)[[group]]) + 1
+print("Unknown variance: the most probable merged group is:")
+print(c(left = left, right = right))
+print("They share the same estimated coefficients:")
+print(active_posteriors(fit_ar_uv)[[group]])
+```
+
+# Online detection - a mean-change example
+We have shown how to apply Bagel offline. In practice, we may want to detect a change online.
+The following code shows how to use Bagel for online mean-change detection with a `for` loop.
+`update()` modifies the detector in place and returns the current no-change
+probability. The loop stops when the probability of a change exceeds the threshold, set to 0.95 in this example.
+The threshold should be calibrated through simulation or validation to achieve a target false alarm rate or average run length under no change.
+An `NA` alarm time means the threshold was not crossed; the MAP
+location is conditional on a change, excluding the first weight for no change.
+
+The `change_tracer()` function records the change probability after each update.
+It receives the accumulated history and the current detector, and returns the
+updated history. We call it explicitly in the sequential loop because
+`update()` does not invoke a tracer automatically.
+
+```{r online-mean}
+change_tracer <- function(trace, bagel_object) {
+  c(trace, 1 - weights_tau_zero(bagel_object))
+}
+
+online_mean <- sequential_bagel_kv_exact(
+  feature_vector = feature_mean, prior = prior_mean,
+  transform = transform_mean, p0 = 0.9, p = 1, sigma = 1,
+  max_particles = 30
+)
+
+threshold <- 0.95
+alarm_time <- NA_integer_
+online_change_trace <- numeric(0)
+for (y in y_mean) {
+  w0 <- bagelR::update(online_mean, y)
+  online_change_trace <- change_tracer(online_change_trace, online_mean)
+  if (1 - w0 > threshold) {
+    alarm_time <- bagelR::time(online_mean)
+    break
+  }
+}
+
+map_online_mean <- which.max(weights(online_mean)[-1])
+print(c(alarm_time = alarm_time, MAP_location = map_online_mean))
+```
+The figure below shows the online detection results.
+The first plot shows the probability of a change over time.
+The second shows the posterior distribution of the changepoint location given the data up to the alarm time,
+or the end of the stream if no alarm occurs.
+
+```{r online-mean-plots, fig.width=8, fig.height=3.5}
+par(mfrow = c(1, 2))
+
+plot(online_change_trace, type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Change probability", col = "black")
+abline(h = threshold, col = "red", lty = 2)
+if (!is.na(alarm_time)) abline(v = alarm_time, col = "red", lty = 3)
+legend("topleft", legend = c("Threshold", paste("Alarm:", alarm_time)),
+       col = "red", lty = c(2, 3), bty = "n", cex = 0.8, inset = c(0, 0.06))
+
+online_posterior <- weights(online_mean)
+plot(seq_along(online_posterior) - 1, online_posterior, type = "h",
+     xlab = "Changepoint location", ylab = "Posterior probability",
+     main = "Changepoint posterior", col = "black")
+abline(v = map_online_mean, col = "red", lty = 2, lwd = 1.5)
+legend("topright", legend = paste("MAP:", map_online_mean),
+       col = "red", lty = 2, bty = "n", cex = 0.8)
+```
+
+# Multiple sequential detectors
+Bagel also allows us to run multiple sequential detectors alongside one another on the same stream.
+This is useful when a change could be of different types.
+
+Suppose we want to detect a continuous or discontinuous slope change.
+At each update, we consider three models: no change, continuous change, and
+discontinuous change.
+
+We use the same model parameters as in the examples above and assign prior probabilities of 0.9, 0.05, and 0.05 to
+no change, continuous change, and discontinuous change, respectively.
+
+After each update, we combine the results of two detectors to obtain
+probabilities for no change, a continuous change, and a discontinuous change.
+Both detectors use the same no-change model, so we include it only once
+when combining their results.
+
+```{r multiple-sequential-detectors}
+p0_sub <- 0.9 / (0.9 + 0.05)
+detectors <- list(
+  continuous = sequential_bagel_kv_approximate(
+    feature_slope_cont, prior_slope_cont, transform_slope_cont,
+    p0 = p0_sub, p = 1, sigma = 1, max_particles = 30),
+  discontinuous = sequential_bagel_kv_approximate(
+    feature_slope_disc, prior_slope_disc, transform_slope_disc,
+    p0 = p0_sub, p = 1, sigma = 1, max_particles = 30)
+)
+
+threshold <- 0.95
+joint_alarm <- NA_integer_
+joint_change_trace <- numeric(0)
+for (y in y_slope_cont) {
+  w0 <- vapply(detectors, function(model) bagelR::update(model, y), numeric(1))
+  model_probability <- c(no_change = 1, (1 - w0) / w0)
+  model_probability <- model_probability / sum(model_probability)
+  joint_change_trace <- c(joint_change_trace, sum(model_probability[-1]))
+  if (sum(model_probability[-1]) > threshold) {
+    joint_alarm <- bagelR::time(detectors$continuous)
+    break
+  }
+}
+print(c(alarm_time = joint_alarm, model_probability))
+```
+
+To determine whether a change has occurred, we sum the probabilities of continuous and discontinuous changes.
+To assess the type of change, we compare the posterior probabilities of the two change models.
+
+Here, we show the change-probability trace and the changepoint-location posterior after summing over both types of change.
+
+```{r multiple-sequential-plots, fig.width=8, fig.height=3.5}
+post_cont <- weights(detectors$continuous)
+post_disc <- weights(detectors$discontinuous)
+joint_posterior <- c(1, post_cont[-1] / post_cont[1] + post_disc[-1] / post_disc[1])
+joint_posterior <- joint_posterior / sum(joint_posterior)
+map_joint <- which.max(joint_posterior[-1])
+
+par(mfrow = c(1, 2))
+
+plot(joint_change_trace, type = "l", ylim = c(0, 1),
+     xlab = "Time", ylab = "Probability of a change",
+     main = "Combined change probability", col = "black")
+abline(h = threshold, col = "red", lty = 2)
+abline(v = joint_alarm, col = "red", lty = 3)
+legend("topleft", legend = c("Threshold", paste("Alarm:", joint_alarm)),
+       col = "red", lty = c(2, 3), bty = "n", cex = 0.8, inset = c(0, 0.06))
+
+plot(seq_along(joint_posterior) - 1, joint_posterior, type = "h",
+     xlab = "Changepoint location", ylab = "Posterior probability",
+     main = "Changepoint posterior", col = "black")
+abline(v = map_joint, col = "red", lty = 2, lwd = 1.5)
+legend("topleft", legend = paste("MAP:", map_joint),
+       col = "red", lty = 2, bty = "n", cex = 0.8)
+```
+
+# References
+
+The algorithm is described in [*Yang, Z., Fearnhead, P., and Grose, D. (2026). Bagel: A Fast Bayesian Online Changepoint Detection Algorithm for Linear Models via Posterior Merging*](https://arxiv.org/abs/2611.03230v1).
+
+The Azure dataset is described in the paper by Jovan Stojkovic, Chaojie Zhang, Íñigo Goiri, Josep Torrellas, and Esha Choukse,
+[*DynamoLLM: Designing LLM Inference Clusters for Performance and Energy Efficiency*](https://arxiv.org/abs/2408.00741),
+in Proceedings of the International Symposium on High-Performance Computer Architecture (HPCA 2025). IEEE, Las Vegas, USA, 2025.,
+ and can be accessed directly from [Azure LLM inference trace 2024](https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2024.md).
+For the video, we averaged the generated tokens per code request over five-minute intervals.
+The analysis is described in [our paper](https://arxiv.org/abs/2611.03230v1).
+
+The synthetic speech in the video was generated with [Kokoro v1.0](https://huggingface.co/hexgrad/Kokoro-82M),
+voice `bf_alice` (model weights licensed under Apache 2.0).
+
+# AI disclosure
+GPT-6 Astra Extra high was used to generate the video based on the author's instructions and to check the grammar of this document.

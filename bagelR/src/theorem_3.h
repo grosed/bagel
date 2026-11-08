@@ -27,7 +27,6 @@ particle_type<noise_type,KL_divergence>& theorem_3_noise(particle_type<noise_typ
 }
 
 
-// modifies exiting particles - mutating
 template<typename noise, KL_divergence_type KL_divergence>
 particle_type<noise,KL_divergence>& theorem_3(particle_type<noise,KL_divergence>& particle_t, const time_type& t, const real_type& val)
 {

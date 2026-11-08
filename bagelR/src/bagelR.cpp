@@ -9,11 +9,11 @@ using namespace Rcpp;
 // [[Rcpp::depends(BH)]]
 
 #include <algorithm>
+#include <cmath>
 #include <list>
 #include <vector>
 #include <map>
 #include <memory>
-
 #include "bagel.h"
 
 
@@ -31,7 +31,8 @@ struct bagelR
 	 const probability_type& p,
 	 const real_type& nu,
 	 const real_type& iota,
-	 const int& n)
+	 const int& n,
+   const std::string& pruning="bagel")
   {
     noise_structure.nu = nu;
     noise_structure.iota = iota;
@@ -40,16 +41,17 @@ struct bagelR
   
     model.prior_function =  std::bind(&bagelR<noise,KL_divergence>::prior_from_R, this, std::placeholders::_1);
     model.feature_vector_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
-    // the transformer needs changing after methods have been added
     model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::transformation_from_R, this, std::placeholders::_1);
   
-    sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
+    sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(
+      bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n,parse_pruning_type(pruning)));
   }
   
   bagelR(const probability_type& p0,
 	 const probability_type& p,
 	 const real_type& sigma,
-	 const int& n)
+	 const int& n,
+   const std::string& pruning="bagel")
   {
     noise_structure.sigma = sigma;
     
@@ -57,11 +59,10 @@ struct bagelR
   
     model.prior_function =  std::bind(&bagelR<noise,KL_divergence>::prior_from_R, this, std::placeholders::_1);
     model.feature_vector_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
-    // the transformer needs changing after methods have been added
     model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::transformation_from_R, this, std::placeholders::_1);
-    // model.transformer_function =  std::bind(&bagelR<noise,KL_divergence>::feature_vector_from_R, this, std::placeholders::_1,std::placeholders::_2);
   
-    sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n));  
+    sp_bagel = std::make_shared<bagel_type<noise,KL_divergence> >(
+      bagel_type<noise,KL_divergence>(model,noise_structure,p0,p,n,parse_pruning_type(pruning)));
   }
   
 
@@ -82,12 +83,40 @@ void set_weights(const std::vector<real_type>& weights)
     auto it_particle = sp_bagel->particles.begin();
     for(auto& weight : weights)
       {
-	it_particle -> weight = weight;
+	it_particle -> log_weight = std::log(weight);
 	it_particle++;
       }
   }
   
   
+  real_type get_log_w0()
+  {
+    return sp_bagel->log_weight_0_t();
+  }
+
+  void set_log_weights(const std::vector<real_type>& log_weights)
+  {
+    if(log_weights.size() != sp_bagel->particles.size())
+      Rcpp::stop("log_weights must have one value per active particle");
+    for(auto value : log_weights)
+      if(std::isnan(value) || value == std::numeric_limits<real_type>::infinity())
+        Rcpp::stop("log_weights must be finite or -Inf");
+    auto particle = sp_bagel->particles.begin();
+    for(auto value : log_weights)
+      {
+        particle->log_weight = value;
+        ++particle;
+      }
+  }
+
+  std::list<double> get_log_weights()
+  {
+    std::list<double> values;
+    for(const auto& particle : sp_bagel->particles)
+      values.push_back(particle.log_weight);
+    return values;
+  }
+
   std::list<double> get_weights()
   {
     
@@ -95,7 +124,7 @@ void set_weights(const std::vector<real_type>& weights)
     std::transform(sp_bagel->particles.begin(),
 		   sp_bagel->particles.end(),
 		   std::inserter(lweights,lweights.end()),
-		   [](auto& particle){return particle.weight;});  
+		   [](auto& particle){return std::exp(particle.log_weight);});
     return lweights;  
   }
 
@@ -106,7 +135,7 @@ void set_weights(const std::vector<real_type>& weights)
       {
         Rcpp::List posterior = Rcpp::List::create(
           Rcpp::Named("tau") = particle.tau,
-          Rcpp::Named("weight") = particle.weight,
+          Rcpp::Named("weight") = std::exp(particle.log_weight),
           Rcpp::Named("mu") = particle.post.mu,
           Rcpp::Named("sigma") = particle.post.sigma
         );
@@ -199,7 +228,6 @@ void set_weights(const std::vector<real_type>& weights)
   {
     P.clear();
     
-    // zip into prior_types
     std::list<prior_type> priors;
     std::transform(prior_mus_from_R.begin(),
 		   prior_mus_from_R.end(),
@@ -228,7 +256,6 @@ int get_max_num_particles()
     return sp_bagel -> max_num_particles;
   }
 
-  // methods requiring specialisation
   std::list<double> get_iotas();
   std::list<double> get_nus();
   
@@ -241,7 +268,6 @@ typedef bagelR<unknown_variance,KL_divergence_type::approximate> bagelR_uv_appro
 typedef bagelR<known_variance,KL_divergence_type::approximate> bagelR_kv_approximate;
 
 
-// specialisation helper
 template<typename bagelR_type>
 std::list<double> get_iotas_helper(const bagelR_type& bagelR_instance)
 {
@@ -253,7 +279,6 @@ std::list<double> get_iotas_helper(const bagelR_type& bagelR_instance)
   return values;  
 }
 
-// specialisation helper
 template<typename bagelR_type>
 std::list<double> get_nus_helper(const bagelR_type& bagelR_instance)
 {
@@ -266,28 +291,24 @@ std::list<double> get_nus_helper(const bagelR_type& bagelR_instance)
 }
 
 
-// specialisations
 template<>
 std::list<double> bagelR_uv_exact::get_iotas()
 {
   return get_iotas_helper(*this);
 }
 
-// specialisations
 template<>
 std::list<double> bagelR_uv_approximate::get_iotas()
 {
   return get_iotas_helper(*this);
 }
 
-// specialisations
 template<>
 std::list<double> bagelR_uv_exact::get_nus()
 {
   return get_nus_helper(*this);
 }
 
-// specialisations
 template<>
 std::list<double> bagelR_uv_approximate::get_nus()
 {
@@ -301,11 +322,15 @@ RCPP_MODULE(bagelR)
 {
   class_<bagelR_uv_exact>("bagelR_uv_exact")
   .constructor<probability_type,probability_type,real_type,real_type,int>()
+  .constructor<probability_type,probability_type,real_type,real_type,int,std::string>()
   .method("get_time", &bagelR_uv_exact::get_time)
   .method("get_taus", &bagelR_uv_exact::get_taus)
   .method("get_weights", &bagelR_uv_exact::get_weights)
   .method("get_posteriors", &bagelR_uv_exact::get_posteriors)
   .method("set_weights", &bagelR_uv_exact::set_weights)
+  .method("get_log_weights", &bagelR_uv_exact::get_log_weights)
+  .method("set_log_weights", &bagelR_uv_exact::set_log_weights)
+  .method("get_log_w0", &bagelR_uv_exact::get_log_w0)
   .method("set_feature_vectors", &bagelR_uv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_uv_exact::set_priors)
   .method("set_transformations", &bagelR_uv_exact::set_transformations)
@@ -319,11 +344,15 @@ RCPP_MODULE(bagelR)
 ;
   class_<bagelR_uv_approximate>("bagelR_uv_approximate")
   .constructor<probability_type,probability_type,real_type,real_type,int>()
+  .constructor<probability_type,probability_type,real_type,real_type,int,std::string>()
   .method("get_time", &bagelR_uv_approximate::get_time)
   .method("get_taus", &bagelR_uv_approximate::get_taus)
   .method("get_weights", &bagelR_uv_approximate::get_weights)
   .method("get_posteriors", &bagelR_uv_approximate::get_posteriors)
   .method("set_weights", &bagelR_uv_approximate::set_weights)
+  .method("get_log_weights", &bagelR_uv_approximate::get_log_weights)
+  .method("set_log_weights", &bagelR_uv_approximate::set_log_weights)
+  .method("get_log_w0", &bagelR_uv_approximate::get_log_w0)
   .method("set_feature_vectors", &bagelR_uv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_uv_approximate::set_priors)
   .method("set_transformations", &bagelR_uv_approximate::set_transformations)
@@ -340,11 +369,15 @@ RCPP_MODULE(bagelR)
 
   class_<bagelR_kv_exact>("bagelR_kv_exact")
   .constructor<probability_type,probability_type,real_type,int>()
+  .constructor<probability_type,probability_type,real_type,int,std::string>()
   .method("get_time", &bagelR_kv_exact::get_time)
   .method("get_taus", &bagelR_kv_exact::get_taus)
   .method("get_weights", &bagelR_kv_exact::get_weights)
   .method("get_posteriors", &bagelR_kv_exact::get_posteriors)
   .method("set_weights", &bagelR_kv_exact::set_weights)
+  .method("get_log_weights", &bagelR_kv_exact::get_log_weights)
+  .method("set_log_weights", &bagelR_kv_exact::set_log_weights)
+  .method("get_log_w0", &bagelR_kv_exact::get_log_w0)
   .method("set_feature_vectors", &bagelR_kv_exact::set_feature_vectors)
   .method("set_priors", &bagelR_kv_exact::set_priors)
   .method("set_transformations", &bagelR_kv_exact::set_transformations)
@@ -356,11 +389,15 @@ RCPP_MODULE(bagelR)
 ;
   class_<bagelR_kv_approximate>("bagelR_kv_approximate")
   .constructor<probability_type,probability_type,real_type,int>()
+  .constructor<probability_type,probability_type,real_type,int,std::string>()
   .method("get_time", &bagelR_kv_approximate::get_time)
   .method("get_taus", &bagelR_kv_approximate::get_taus)
   .method("get_weights", &bagelR_kv_approximate::get_weights)
   .method("get_posteriors", &bagelR_kv_approximate::get_posteriors)
   .method("set_weights", &bagelR_kv_approximate::set_weights)
+  .method("get_log_weights", &bagelR_kv_approximate::get_log_weights)
+  .method("set_log_weights", &bagelR_kv_approximate::set_log_weights)
+  .method("get_log_w0", &bagelR_kv_approximate::get_log_w0)
   .method("set_feature_vectors", &bagelR_kv_approximate::set_feature_vectors)
   .method("set_priors", &bagelR_kv_approximate::set_priors)
   .method("set_transformations", &bagelR_kv_approximate::set_transformations)

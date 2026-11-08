@@ -1,0 +1,19 @@
+# R session state
+.Rhistory
+.RData
+.Ruserdata
+
+# Compiled package files and generated documentation
+/bagelR/src/*.o
+/bagelR/src/*.obj
+/bagelR/src/*.dll
+/bagelR/src/*.so
+/bagelR/src/*.a
+/bagelR/src/symbols.rds
+/bagelR/vignettes/*.html
+/bagelR/inst/doc/
+
+# Local package builds and checks
+/bagelR_*.tar.gz
+/bagelR_*.zip
+*.Rcheck/

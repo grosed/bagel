@@ -1,0 +1,5 @@
+# Keep portable line endings in the R package's compiled sources.
+bagelR/src/*.cpp text eol=lf
+bagelR/src/*.h text eol=lf
+bagelR/src/Makevars text eol=lf
+bagelR/src/Makevars.win text eol=lf

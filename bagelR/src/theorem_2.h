@@ -6,7 +6,6 @@
 #include "time_type.h"
 
 
-// creates new particles - non mutating
 template<typename noise, KL_divergence_type KL_divergence>
 particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_divergence>& particle_0, const time_type& t)
 {
@@ -20,8 +19,7 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
       return particle_t;
     }
 
-  // Make everyhting very explicit for now - can take some shortcuts (i.e. no temporary objects) once it is tested.
-  
+
   prior_type prior_1 = particle_0.model.prior_function(1);
   prior_type prior_t = particle_0.model.prior_function(t);
   
@@ -29,7 +27,6 @@ particle_type<noise,KL_divergence> theorem_2(const particle_type<noise,KL_diverg
   int d2 = prior_t.mu.rows() - d1;
   int n = d1 + d2;
 
-  // resize particle post matrices
   particle_t.post.mu = Eigen::MatrixXd::Zero(n,1);
   particle_t.post.sigma = Eigen::MatrixXd::Zero(n,n);
   

@@ -1,9 +1,17 @@
 
 setClass("bagel_type")
 
-
-sequential_bagel_kv_exact <- function(feature_vector,prior,transform,p0,p,sigma,max_particles)
+.bagel_pruning <- function(pruning)
 {
+  match.arg(
+    pruning,
+    c("bagel", "LP-M", "LP-P")
+  )
+}
+
+sequential_bagel_kv_exact <- function(feature_vector,prior,transform,p0,p,sigma,max_particles,pruning="bagel")
+{
+   pruning <- .bagel_pruning(pruning)
    bagel_object <- new("bagel_kv_exact_type",feature_vector=feature_vector,
 				             prior=prior,
 			                     transform=transform,
@@ -11,13 +19,14 @@ sequential_bagel_kv_exact <- function(feature_vector,prior,transform,p0,p,sigma,
 			                     p=p,
 			                     sigma=sigma,
 			                     max_particles=max_particles,
-			                     bagel_object=new(bagelR_kv_exact,p0,p,sigma,max_particles))
+			                     bagel_object=new(bagelR_kv_exact,p0,p,sigma,max_particles,pruning))
   return(bagel_object)
 
 }
 
-sequential_bagel_uv_exact <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles)
+sequential_bagel_uv_exact <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles,pruning="bagel")
 {
+   pruning <- .bagel_pruning(pruning)
    bagel_object <- new("bagel_uv_exact_type",feature_vector=feature_vector,
 						   prior=prior,
 			                  	   transform=transform,
@@ -26,13 +35,14 @@ sequential_bagel_uv_exact <- function(feature_vector,prior,transform,p0,p,nu,iot
 			                  	   nu=nu,
 			                  	   iota=iota,
 			                  	   max_particles=max_particles,
-			                  	   bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles))
+                                                   bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles,pruning))
   return(bagel_object)
 }
 
 
-sequential_bagel_kv_approximate <- function(feature_vector,prior,transform,p0,p,sigma,max_particles)
+sequential_bagel_kv_approximate <- function(feature_vector,prior,transform,p0,p,sigma,max_particles,pruning="bagel")
 {
+   pruning <- .bagel_pruning(pruning)
    bagel_object <- new("bagel_kv_approximate_type",feature_vector=feature_vector,
 				             prior=prior,
 			                     transform=transform,
@@ -40,13 +50,14 @@ sequential_bagel_kv_approximate <- function(feature_vector,prior,transform,p0,p,
 			                     p=p,
 			                     sigma=sigma,
 			                     max_particles=max_particles,
-			                     bagel_object=new(bagelR_kv_approximate,p0,p,sigma,max_particles))
+			                     bagel_object=new(bagelR_kv_approximate,p0,p,sigma,max_particles,pruning))
   return(bagel_object)
 
 }
 
-sequential_bagel_uv_approximate <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles)
+sequential_bagel_uv_approximate <- function(feature_vector,prior,transform,p0,p,nu,iota,max_particles,pruning="bagel")
 {
+   pruning <- .bagel_pruning(pruning)
    bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
 						   prior=prior,
 			                  	   transform=transform,
@@ -55,14 +66,13 @@ sequential_bagel_uv_approximate <- function(feature_vector,prior,transform,p0,p,
 			                  	   nu=nu,
 			                  	   iota=iota,
 			                  	   max_particles=max_particles,
-			                  	   bagel_object=new(bagelR_uv_approximate,p0,p,nu,iota,max_particles))
+                                                   bagel_object=new(bagelR_uv_approximate,p0,p,nu,iota,max_particles,pruning))
   return(bagel_object)				   
 }
 
 
 
 
-# set_weights
 setGeneric("set_weights",function(object,weights) standardGeneric("set_weights"))
 setMethod("set_weights","bagel_type",
           function(object,weights)
@@ -71,7 +81,6 @@ setMethod("set_weights","bagel_type",
 	  })
 
 
-# weights
 setGeneric("weights",function(object) standardGeneric("weights"))
 setMethod("weights","bagel_type",
           function(object)
@@ -82,7 +91,6 @@ setMethod("weights","bagel_type",
 	  })
 
 
-# active_weights
 setGeneric("active_weights",function(object) standardGeneric("active_weights"))
 setMethod("active_weights","bagel_type",
           function(object)
@@ -90,8 +98,6 @@ setMethod("active_weights","bagel_type",
         return(object@bagel_object$get_weights())
 	  })
 
-# active_posteriors
-# The returned list has the same order and length as active_weights().
 setGeneric("active_posteriors",function(object) standardGeneric("active_posteriors"))
 setMethod("active_posteriors","bagel_type",
           function(object)
@@ -100,7 +106,6 @@ setMethod("active_posteriors","bagel_type",
 	  })
 
 
-# taus
 setGeneric("taus",function(object) standardGeneric("taus"))
 setMethod("taus","bagel_type",
           function(object)
@@ -110,7 +115,6 @@ setMethod("taus","bagel_type",
 
 
 
-# ratios
 setGeneric("ratios",function(object) standardGeneric("ratios"))
 setMethod("ratios","bagel_type",
           function(object)
@@ -119,7 +123,6 @@ setMethod("ratios","bagel_type",
 	  })
 
 
-# weights_tau_zero
 setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
 setMethod("weights_tau_zero","bagel_type",
           function(object)
@@ -129,16 +132,13 @@ setMethod("weights_tau_zero","bagel_type",
 
 
 
-# time
 setGeneric("time",function(object) standardGeneric("time"))
 setMethod("time","bagel_type",
           function(object)
 	  {
-	    # note - time is incremented preemptivley by bagel object
 	    return(object@bagel_object$get_time() - 1)
 	  })
 
-# max_particles
 setGeneric("max_particles",function(object) standardGeneric("max_particles"))
 setMethod("max_particles","bagel_type",
           function(object)
@@ -147,7 +147,6 @@ setMethod("max_particles","bagel_type",
 	  })
 
 
-# mus
 setGeneric("mus",function(object) standardGeneric("mus"))
 setMethod("mus","bagel_type",
           function(object)
@@ -155,7 +154,6 @@ setMethod("mus","bagel_type",
 	    return(object@bagel_object$get_mus())
 	  })
 
-# sigmas
 setGeneric("sigmas",function(object) standardGeneric("sigmas"))
 setMethod("sigmas","bagel_type",
           function(object)
@@ -167,6 +165,7 @@ setClass("bagel_result_type", slots=list(y = "numeric",
                                          threshold = "numeric",
 					 max_particles = "numeric",
                                          w0ts = "numeric",
+                                         log_w0ts = "numeric",
 					 weights="numeric",
 					 posteriors="list",
 					 ratios="list",
@@ -183,12 +182,14 @@ bagel_result <- function(y,
 			 ratios,
 			 taus,
 			 t,
-			 trace)
+			 trace,
+                         log_w0ts = log(w0ts))
 {
 	return(new("bagel_result_type",y=y,
 	                               threshold=threshold,
 				       max_particles=max_particles,
 	                               w0ts=w0ts,
+                                       log_w0ts=log_w0ts,
 				       weights=weights,
 				       posteriors=posteriors,
 				       ratios=ratios,
@@ -198,7 +199,6 @@ bagel_result <- function(y,
 }
 
 
-## default tracer
 nothing <- function(trace,bagel_object) 
 { 
     return(trace)
@@ -219,9 +219,9 @@ setClass("bagel_uv_approximate_type", slots=list(feature_vector = "function",
 				                 bagel_object = "ANY"),
 						 contains="bagel_type")
 
-bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer = nothing)
+bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer = nothing,pruning="bagel")
 {
-
+   pruning <- .bagel_pruning(pruning)
    bagel_object <- new("bagel_uv_approximate_type",feature_vector=feature_vector,
 						   prior=prior,
 			                  	   transform=transform,
@@ -231,7 +231,7 @@ bagel_uv_approximate <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,m
 			                  	   iota=iota,
 			                  	   max_particles=max_particles,
 						   tracer=tracer,
-			                  	   bagel_object=new(bagelR_uv_approximate,p0,p,nu,iota,max_particles))
+                                                   bagel_object=new(bagelR_uv_approximate,p0,p,nu,iota,max_particles,pruning))
   return(analyse(Y,threshold,bagel_object))
 
 }
@@ -248,9 +248,9 @@ setClass("bagel_uv_exact_type", slots=list(feature_vector = "function",
 				           bagel_object = "ANY"),
 					   contains="bagel_type")
 
-bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer = nothing)
+bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_particles,threshold,tracer = nothing,pruning="bagel")
 {
-
+   pruning <- .bagel_pruning(pruning)
    bagel_object <- new("bagel_uv_exact_type",feature_vector=feature_vector,
 				             prior=prior,
 			                     transform=transform,
@@ -260,7 +260,7 @@ bagel_uv_exact <- function(Y,feature_vector,prior,transform,p0,p,nu,iota,max_par
 			                     iota=iota,
 			                     max_particles=max_particles,
 					     tracer=tracer,
-			                     bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles))
+			                     bagel_object=new(bagelR_uv_exact,p0,p,nu,iota,max_particles,pruning))
   return(analyse(Y,threshold,bagel_object))
 }
 
@@ -277,8 +277,9 @@ setClass("bagel_kv_approximate_type", slots=list(feature_vector = "function",
 				                 bagel_object = "ANY"),
 						 contains="bagel_type")
 
-bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing)
+bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing,pruning="bagel")
 {
+   pruning <- .bagel_pruning(pruning)
 
    bagel_object <- new("bagel_kv_approximate_type",feature_vector=feature_vector,
 						   prior=prior,
@@ -288,7 +289,7 @@ bagel_kv_approximate <- function(Y,feature_vector,prior,transform,p0,p,sigma,max
 			                  	   sigma=sigma,
 			                  	   max_particles=max_particles,
 						   tracer=tracer,
-			                  	   bagel_object=new(bagelR_kv_approximate,p0,p,sigma,max_particles))
+                                                   bagel_object=new(bagelR_kv_approximate,p0,p,sigma,max_particles,pruning))
   return(analyse(Y,threshold,bagel_object))
 
 }
@@ -329,8 +330,9 @@ setMethod("iota","bagel_uv_approximate_type",
 	    return(object@bagel_object$get_iotas()[[1]])
 	  })
 
-bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing)
+bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_particles,threshold,tracer = nothing,pruning="bagel")
 {
+   pruning <- .bagel_pruning(pruning)
 
    bagel_object <- new("bagel_kv_exact_type",feature_vector=feature_vector,
 				             prior=prior,
@@ -340,25 +342,26 @@ bagel_kv_exact <- function(Y,feature_vector,prior,transform,p0,p,sigma,max_parti
 			                     sigma=sigma,
 			                     max_particles=max_particles,
 					     tracer=tracer,
-			                     bagel_object=new(bagelR_kv_exact,p0,p,sigma,max_particles))
+			                     bagel_object=new(bagelR_kv_exact,p0,p,sigma,max_particles,pruning))
   return(analyse(Y,threshold,bagel_object))
 
 }
 
 
 
-# call
 
 analyse <- function(Y,threshold,bagel_object)
 {
+   log_cutoff <- if (threshold >= 1) Inf else -log1p(-threshold)
    trace = list()
-   w0ts <- list()
+   log_w0ts <- list()
    for(y in Y)
    {
-      w0t <- update(bagel_object,y)
-      w0ts <- append(w0ts,w0t)
+      update(bagel_object,y)
+      log_w0t <- bagel_object@bagel_object$get_log_w0()
+      log_w0ts <- append(log_w0ts,log_w0t)
       trace <- bagel_object@tracer(trace,bagel_object)
-      if(1.0 - w0t > threshold)
+      if(-log_w0t > log_cutoff)
       {
 	break
       }
@@ -366,13 +369,14 @@ analyse <- function(Y,threshold,bagel_object)
    results <- bagel_result(as.numeric(Y),
                        threshold,
 		       bagel_object@bagel_object$get_max_num_particles(),
-                       as.numeric(w0ts),
+                       exp(as.numeric(log_w0ts)),
                        as.numeric(bagel_object@bagel_object$get_weights()),
 		       bagel_object@bagel_object$get_posteriors(),
 		       bagel_object@bagel_object$get_ratios(),
 		       as.numeric(bagel_object@bagel_object$get_taus()),	
                        bagel_object@bagel_object$get_time(),
-		       trace)
+		       trace,
+                       log_w0ts=as.numeric(log_w0ts))
   return(results)
 	
 }
@@ -409,8 +413,6 @@ update <- function(object,y)
 }
 
 
-# weights
-#setGeneric("weights",function(object) standardGeneric("weights"))
 setMethod("weights","bagel_result_type",
           function(object)
 	  {
@@ -418,16 +420,12 @@ setMethod("weights","bagel_result_type",
 	  })
 
 
-# active_weights
-#setGeneric("active_weights",function(object) standardGeneric("active_weights"))
 setMethod("active_weights","bagel_result_type",
           function(object)
 	  {
 	    return(object@weights)
 	  })
 
-# active_posteriors
-# The returned list has the same order and length as active_weights().
 setMethod("active_posteriors","bagel_result_type",
           function(object)
 	  {
@@ -435,8 +433,6 @@ setMethod("active_posteriors","bagel_result_type",
 	  })
 
 
-# taus
-#setGeneric("taus",function(object) standardGeneric("taus"))
 setMethod("taus","bagel_result_type",
           function(object)
 	  {
@@ -445,8 +441,6 @@ setMethod("taus","bagel_result_type",
 
 
 
-# ratios
-#setGeneric("ratios",function(object) standardGeneric("ratios"))
 setMethod("ratios","bagel_result_type",
           function(object)
 	  {
@@ -454,8 +448,6 @@ setMethod("ratios","bagel_result_type",
 	  })
 
 
-# weights_tau_zero
-#setGeneric("weights_tau_zero",function(object) standardGeneric("weights_tau_zero"))
 setMethod("weights_tau_zero","bagel_result_type",
           function(object)
 	  {
@@ -464,17 +456,12 @@ setMethod("weights_tau_zero","bagel_result_type",
 
 
 
-# time
-#setGeneric("time",function(object) standardGeneric("time"))
 setMethod("time","bagel_result_type",
           function(object)
 	  {
-	    # note - time is incremented preemptivley by bagel object
 	    return(object@t - 1)
 	  })
 
-# max_particles
-#setGeneric("max_particles",function(object) standardGeneric("max_particles"))
 setMethod("max_particles","bagel_result_type",
           function(object)
 	  {
@@ -482,15 +469,20 @@ setMethod("max_particles","bagel_result_type",
 	  })
 
 
-# changepoint
 setGeneric("changepoint",function(object) standardGeneric("changepoint"))
 setMethod("changepoint","bagel_result_type",
           function(object)
-	  {
-	    if(object@t - 1 < length(object@y))
-	    {
-	      return(list("location"=which.max(weights(object)[-1]),"detected"=time(object)))
-	    }
-	    return(NA)
-	  })
+          {
+            change_weights <- weights(object)[-1]
+            location <- if (length(change_weights) && any(change_weights > 0)) {
+              which.max(change_weights)
+            } else NA_integer_
+
+            log_cutoff <- if (object@threshold >= 1) Inf else
+              -log1p(-object@threshold)
+            alarms <- which(-object@log_w0ts > log_cutoff)
+            detected <- if (length(alarms)) alarms[1] else NA_integer_
+
+            list(location = location, detected = detected)
+          })
 

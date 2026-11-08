@@ -1,63 +1,43 @@
-# Installing and Using the bagelR Package
+# bagelR
 
-## Installing bagelR
+Fast Bayesian online changepoint detection for linear models, with an R interface and a C++ backend. The R package source is in `bagelR/`; the standalone C++ implementation is in `c++/`.
 
-The **bagelR** package can be installed via an interactive **R** session using the following code.
+## Installation
 
+Install the development package from GitHub:
 
-```R
-if(system.file(package = "bagelR") != "")
-    {
-      remove.packages("bagelR")
-    }
-library("remotes")
-install_github("grosed/bagel/bagelR",force=TRUE)
+```r
+install.packages("remotes")
+remotes::install_github("grosed/bagel", subdir = "bagelR")
 ```
 
-    Removing package from ‘/home/grosed/DASS/R-packages’
-    (as ‘lib’ is unspecified)
-    
-    Using GitHub PAT from the git credential store.
-    
-    Downloading GitHub repo grosed/bagel@HEAD
-    
+Installation from source requires a C++20 toolchain. To build the introductory vignette as well:
 
+```r
+install.packages(c("knitr", "rmarkdown"))
+remotes::install_github("grosed/bagel", subdir = "bagelR",
+                        build_vignettes = TRUE)
+vignette("bagelR", package = "bagelR")
+```
 
-    
+Vignette building also requires Pandoc. The tutorial source is [Getting started with bagelR](bagelR/vignettes/bagelR.Rmd). It covers mean, slope and seasonal changes, autocorrelated errors, and sequential detection.
 
-
-    Running `R CMD build`...
-    
-
-
-    * checking for file ‘/tmp/RtmpAWlt4x/remotes145e511bdb2c82/grosed-bagel-62aaf57/bagelR/DESCRIPTION’ ... OK
-    * preparing ‘bagelR’:
-    * checking DESCRIPTION meta-information ... OK
-    * cleaning src
-    * installing the package to process help pages
-    * saving partial Rd database
-    * cleaning src
-    * checking for LF line-endings in source and make files and shell scripts
-    * checking for empty or unneeded directories
-    * building ‘bagelR_1.8.0.tar.gz’
-
-
-    Installing package into ‘/home/grosed/DASS/R-packages’
-    (as ‘lib’ is unspecified)
-    
-
-
-## Check package version
-
-
-```R
+```r
+library(bagelR)
 packageVersion("bagelR")
 ```
 
-[1] ‘1.8.0’
+See [Changes](#changes) for release notes.
 
+The introduction video is distributed separately from the R package. The [video upload instructions](release-assets/bagel-introduction/README.md) describe how to publish the prepared MP4 at the address used by the vignette.
 
-## Using bagelR
+## Building and checking
 
-See [here](https://github.com/grosed/bagel/blob/v-1.8.0/notebooks/examples.ipynb) for details of and examples showing how to use **bagelR**.
+From this repository directory, run:
 
+```sh
+R CMD build bagelR
+R CMD check --as-cran bagelR_1.8.2.tar.gz
+```
+
+Use the version from `bagelR/DESCRIPTION` if it changes. Build and check outputs, compiled files and R session histories are excluded from version control. The package vignette is rebuilt from its R Markdown source.

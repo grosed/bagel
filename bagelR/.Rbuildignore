@@ -1,0 +1,8 @@
+(^|/)\.Rhistory$
+(^|/)\.RData$
+(^|/)\.Ruserdata$
+^src/.*\.(o|obj|dll|so|a)$
+^src/symbols\.rds$
+^vignettes/bagelR\.html$
+^vignettes/media/bagel-introduction\.mp4$
+^cran-comments\.md$
