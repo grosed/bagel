@@ -1,6 +1,7 @@
 An introduction to Bagel, a fast Bayesian online changepoint detection algorithm for linear models, illustrated using Azure LLM inference trace data.
 
-Download or open the attached **bagel-introduction.mp4**. The package vignette includes the transcript, model explanation and worked examples. This release distributes the video; it is not a new R package version.
+https://github.com/user-attachments/assets/e867840b-43cc-4cb9-b080-414f03b36134
+
 
 ## Credits
 
