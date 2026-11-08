@@ -29,7 +29,7 @@ packageVersion("bagelR")
 
 See [Changes](#changes) for release notes.
 
-The introduction video is distributed separately from the R package. The [video upload instructions](release-assets/bagel-introduction/README.md) describe how to publish the prepared MP4 at the address used by the vignette.
+The introduction video is stored outside the R package. [Watch the video online and view its credits](release-assets/bagel-introduction/release-notes.md). The vignette thumbnail opens this GitHub page with a video player.
 
 ## Building and checking
 

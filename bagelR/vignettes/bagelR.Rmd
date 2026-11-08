@@ -29,48 +29,10 @@ The algorithm extends classical Bayesian online changepoint detection to linear 
 reduce the cost of posterior updating while maintaining an approximation to the posterior distribution. A short video introduces
 the general idea of Bagel through an application to Azure LLM trace data.
 
-[![Watch the Bagel introduction video](media/bagel-introduction.jpg)](https://github.com/grosed/bagel/releases/download/bagel-introduction/bagel-introduction.mp4)
-
-[Watch the introduction video](https://github.com/grosed/bagel/releases/download/bagel-introduction/bagel-introduction.mp4)
-(hosted on GitHub; internet access required). A transcript and credits are provided below.
-
-<details>
-<summary>Transcript and video credits</summary>
-
-Kitty's job is to monitor live data streams and report anomalies as quickly as possible!
-A sudden jump, a turning trend, or a new daily rhythm... Kitty watches for them all.
-
-Kitty wants to spot changes, and understand when they happened and how certain they are.
-Kitty chooses a Bayesian changepoint detection algorithm.
-
-However, classical Bayesian updating considers every past observation as a possible
-change location whenever new data arrives. More data, more waiting... Poor Kitty...
-
-Until Kitty finds Bagel!
-
-Bagel merges neighbouring candidates as new data arrives.
-Kitty keeps monitoring as the history grows.
-With a fixed budget, the work per update stays bounded.
-
-Kitty monitors average generated tokens for Azure coding requests, in five-minute intervals.
-The yellow line is the fitted line.
-The red shading shows where the change likely happened.
-
-Now Kitty can monitor the stream quickly and see how certain each change is.
-
-**Data:** Microsoft [Azure LLM inference trace 2024](https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2024.md),
-code-request dataset, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-Adaptations: five-minute averages of generated tokens per request, BAGEL analysis,
-and animated visualisation. The dataset's accompanying study is Jovan Stojkovic,
-Chaojie Zhang, Íñigo Goiri, Josep Torrellas, and Esha Choukse,
-[*DynamoLLM: Designing LLM Inference Clusters for Performance and Energy Efficiency*](https://arxiv.org/abs/2408.00741),
-HPCA 2025.
-
-**Narration:** synthetic speech generated with [Kokoro v1.0](https://huggingface.co/hexgrad/Kokoro-82M),
-voice `bf_alice` (model weights licensed under Apache 2.0).
-The illustrations and sound effects were created for this video.
-
-</details>
+<a href="https://github.com/grosed/bagel/blob/1ad535e8c6e7882b379d0a62446577c9c7451c0d/release-assets/bagel-introduction/release-notes.md">
+  <img src="media/bagel-introduction.jpg" alt="Watch the Bagel introduction video online"
+       width="320" style="max-width: 100%; height: auto;">
+</a>
 
 The video shows the online setting, while the package supports both offline and online use: data arrive sequentially in the online setting, whereas
 all data are available in the offline setting. This vignette first introduces the model interface through offline examples of changes in mean, slope, and seasonality,
@@ -79,6 +41,19 @@ In both settings, `bagelR` processes observations sequentially and considers at 
 Models that can be expressed as linear Gaussian models with the conjugate priors described below can be implemented with `bagelR`.
 
 
+# Installation
+The vignette uses the v1.8.2 version.
+
+```r
+install.packages("remotes", repos = "https://cloud.r-project.org")
+
+remotes::install_github(
+  "grosed/bagel",
+  subdir = "bagelR",
+  ref = "v1.8.2",
+  force = TRUE
+)
+```
 
 ```{r load-package}
 library(bagelR)
